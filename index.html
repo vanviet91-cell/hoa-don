@@ -27,6 +27,10 @@ input:focus,textarea:focus{outline:2px solid #99f6e4;border-color:var(--ac)}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .item{border:1px solid var(--bd);border-radius:10px;padding:10px;margin-bottom:8px;position:relative}
 .item .g{display:grid;grid-template-columns:70px 1fr 1fr;gap:6px}
+.item .imei{display:flex;gap:6px}.item .imei input{flex:1}
+.item .imei button{border:0;border-radius:8px;padding:0 12px;background:var(--ac);color:#fff;font-size:14px;white-space:nowrap}
+#scan{border:0;border-radius:14px;width:94%;max-width:480px;padding:12px}#scan::backdrop{background:#000c}
+#reader{width:100%;min-height:260px;background:#000;border-radius:10px;overflow:hidden}
 .item .sum{font-size:13px;color:var(--mu);margin-top:6px}
 .item .sum b{color:var(--tx)}
 .del{position:absolute;top:6px;right:6px;border:0;background:#fee2e2;color:#b91c1c;border-radius:6px;width:26px;height:26px;font-size:16px}
@@ -89,6 +93,12 @@ dialog::backdrop{background:#0006}
  </div>
  <div class="actions" style="margin-top:14px"><button class="btn pri" id="sOk">Lưu cài đặt</button><button class="btn sec" id="sCancel">Đóng</button></div>
 </dialog>
+<dialog id="scan">
+ <h3 style="margin:0 0 8px">Quét IMEI (QR hoặc mã vạch)</h3>
+ <div id="reader"></div>
+ <p class="hint" id="scanMsg">Đưa mã QR hoặc mã vạch IMEI vào giữa khung.</p>
+ <div class="actions"><button class="btn sec" id="scanClose" style="width:100%">Đóng</button></div>
+</dialog>
 <div id="toast"></div>
 
 <script>
@@ -127,14 +137,19 @@ function renderItems(){const box=$("items");box.innerHTML="";items.forEach((it,i
  <input class="ten" placeholder="Tên hàng hoá, model, serial..." value="${(it.ten||"").replace(/"/g,"&quot;")}">
  <div class="g"><div><label>SL</label><input class="sl" type="number" min="0" value="${it.sl}"></div>
  <div><label>Đơn giá</label><input class="gia" inputmode="numeric" value="${it.giaS||""}"></div>
- <div><label>Chiết khấu</label><input class="ck" value="${it.ck||""}"></div></div><div class="sum"></div>`;
+ <div><label>Chiết khấu</label><input class="ck" value="${it.ck||""}"></div></div>
+ <label>IMEI / Serial</label><div class="imei"><input class="im" autocapitalize="characters" autocomplete="off" placeholder="Quét hoặc gõ, không có thì để trống" value="${(it.imei||"").replace(/"/g,"&quot;")}"><button class="qs" type="button">Quét</button></div>
+ <div class="sum"></div>`;
  d.querySelector(".del").onclick=()=>{items.splice(i,1);if(!items.length)items.push(blank());renderItems();update()};
  d.querySelector(".ten").oninput=e=>{it.ten=e.target.value;update()};
  d.querySelector(".sl").oninput=e=>{it.sl=e.target.value;update()};
  const g=d.querySelector(".gia");g.oninput=e=>{const v=num(e.target.value);it.giaS=v?fmt(v):"";e.target.value=it.giaS;update()};
  d.querySelector(".ck").oninput=e=>{it.ck=e.target.value;update()};
+ const im=d.querySelector(".im");im.oninput=e=>{it.imei=e.target.value;update()};
+ d.querySelector(".qs").onclick=()=>openScan(code=>{const cur=(it.imei||"").trim();
+  it.imei=cur&&Number(it.sl)>1&&!cur.split(/\s*,\s*/).includes(code)?cur+", "+code:code;im.value=it.imei;update()});
  box.appendChild(d)});}
-const blank=()=>({ten:"",sl:1,giaS:"",ck:""});
+const blank=()=>({ten:"",sl:1,giaS:"",ck:"",imei:""});
 
 function update(){const t=calc();document.querySelectorAll("#items .item").forEach((d,i)=>{const it=items[i];
  d.querySelector(".sum").innerHTML=`Giá sau CK: <b>${fmt(it.sau)}</b> · Thành tiền: <b>${fmt(it.tt)}</b>`});
@@ -142,6 +157,20 @@ function update(){const t=calc();document.querySelectorAll("#items .item").forEa
  <div><span>Tổng cộng</span><b>${fmt(t.tc)}</b></div><div><span>Đã thanh toán</span><b>${fmt(t.da)}</b></div>
  <div class="big"><span>Cần thanh toán</span><span>${fmt(t.con)}</span></div>`;
  saveDraft();draw(t)}
+
+// ---------- quét IMEI ----------
+let qr=null,onCode=null;
+function loadLib(){return window.__Html5QrcodeLibrary__?Promise.resolve():new Promise((ok,no)=>{const sc=document.createElement("script");sc.src="quet.js";sc.onload=ok;sc.onerror=()=>no(new Error("Không tải được bộ quét"));document.head.appendChild(sc)})}
+function pickImei(t){t=String(t||"").trim();const m=t.match(/(?:^|\D)(\d{15})(?!\d)/);if(m)return m[1];
+ const tok=t.split(/[\s,;|]+/).filter(Boolean);return tok.length===1?tok[0]:t}
+async function openScan(cb){onCode=cb;$("scanMsg").textContent="Đưa mã QR hoặc mã vạch IMEI vào giữa khung.";$("scan").showModal();
+ try{await loadLib();const L=window.__Html5QrcodeLibrary__,F=L.Html5QrcodeSupportedFormats;
+  qr=new L.Html5Qrcode("reader",{formatsToSupport:[F.QR_CODE,F.CODE_128,F.CODE_39,F.EAN_13,F.DATA_MATRIX],verbose:false});
+  await qr.start({facingMode:"environment"},{fps:10,qrbox:(w,h)=>({width:Math.floor(w*0.85),height:Math.floor(Math.min(h,w)*0.6)})},
+   txt=>{const c=pickImei(txt);if(!c)return;if(navigator.vibrate)navigator.vibrate(80);const f=onCode;closeScan();f&&f(c);toast("Đã nhận: "+c)},()=>{});
+ }catch(e){$("scanMsg").textContent="Không mở được camera: "+(e&&e.message||e)+". Hãy cho phép Safari dùng camera, hoặc gõ tay."}}
+async function closeScan(){onCode=null;if(qr){try{if(qr.isScanning)await qr.stop();qr.clear()}catch(e){}qr=null}if($("scan").open)$("scan").close()}
+$("scanClose").onclick=closeScan;$("scan").addEventListener("cancel",e=>{e.preventDefault();closeScan()});
 
 function saveDraft(){localStorage.setItem("hd_draft",JSON.stringify({soHD:$("soHD").value,ngay:$("ngay").value,khTen:$("khTen").value,khSdt:$("khSdt").value,khDc:$("khDc").value,daTT:$("daTT").value,items}))}
 
@@ -153,7 +182,7 @@ function draw(t){t=t||calc();const cv=$("cv"),ctx=cv.getContext("2d");
  const cols=[{h:"STT",w:66,a:"center"},{h:"Tên hàng hóa",w:0,a:"left"},{h:"SL",w:56,a:"center"},{h:"Đơn giá",w:156,a:"right"},{h:"Chiết\nkhấu",w:124,a:"right"},{h:"Giá sau\nCK",w:156,a:"right"},{h:"Thành tiền",w:170,a:"right"}];
  const tw=W-2*M;cols[1].w=tw-cols.reduce((s,c)=>s+c.w,0);
  // tính chiều cao trước
- ctx.font=`26px ${FF}`;const rows=items.map(it=>wrap(ctx,it.ten,cols[1].w-20));
+ ctx.font=`26px ${FF}`;const rows=items.map(it=>{const l=it.ten?wrap(ctx,it.ten,cols[1].w-20):[];const m=String(it.imei||"").trim();if(m)l.push(...wrap(ctx,"IMEI: "+m,cols[1].w-20));return l.length?l:[""]});
  const rowH=rows.map(l=>Math.max(64,l.length*32+28));
  const noteLines=[];ctx.font=`26px ${FF}`;store.note.split("\n").filter(s=>s.trim()).forEach((n,i)=>{wrap(ctx,n,tw-90).forEach((l,j)=>noteLines.push({l,first:j===0,i}))});
  const tableTop=640;const tableEnd=tableTop+90+rowH.reduce((a,b)=>a+b,0);
