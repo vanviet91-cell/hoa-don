@@ -37,6 +37,10 @@ input:focus,textarea:focus{outline:2px solid #99f6e4;border-color:var(--ac)}
 .btn{border:0;border-radius:10px;padding:11px 14px;font:600 15px inherit;font-family:inherit;cursor:pointer}
 .pri{background:var(--ac);color:#fff}.sec{background:#e5e7eb;color:var(--tx)}
 .actions{display:flex;flex-wrap:wrap;gap:8px}
+.fmt{display:flex;align-items:center;gap:8px;width:100%;font-size:14px;color:var(--mu)}
+.fmt .seg{display:inline-flex;border:1px solid #d1d5db;border-radius:10px;overflow:hidden}
+.fmt .seg button{border:0;background:#fff;color:var(--tx);padding:7px 14px;font:600 14px inherit;font-family:inherit;cursor:pointer}
+.fmt .seg button.on{background:var(--ac);color:#fff}
 .totals div{display:flex;justify-content:space-between;padding:3px 0}
 .totals .big{font-weight:700;font-size:17px;color:var(--ac)}
 #preview{position:sticky;top:64px;align-self:start}
@@ -73,6 +77,7 @@ dialog::backdrop{background:#0006}
    <div class="totals" id="totals" style="margin-top:10px"></div>
   </div>
   <div class="card actions">
+   <div class="fmt">Định dạng ảnh: <span class="seg"><button type="button" data-f="png">PNG</button><button type="button" data-f="jpeg">JPEG</button></span></div>
    <button class="btn pri" id="btnSave">Lưu ảnh</button>
    <button class="btn pri" id="btnShare">Gửi / chia sẻ ảnh</button>
    <button class="btn sec" id="btnNew">Hoá đơn mới</button>
@@ -227,14 +232,18 @@ function draw(t){t=t||calc();const cv=$("cv"),ctx=cv.getContext("2d");
  ctx.fillStyle="#000";ctx.textAlign="left"}
 
 function fileName(){const ten=($("khTen").value||"khach").normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/đ/g,"d").replace(/Đ/g,"D").replace(/[^\w]+/g,"-");
- return `hoa-don-${$("soHD").value}-${ten}.png`}
+ return `hoa-don-${$("soHD").value}-${ten}.${imgFmt==="jpeg"?"jpg":"png"}`}
+let imgFmt=localStorage.getItem("hd_fmt")==="jpeg"?"jpeg":"png";
+function mime(){return "image/"+imgFmt}
+function showFmt(){document.querySelectorAll(".fmt .seg button").forEach(b=>b.classList.toggle("on",b.dataset.f===imgFmt))}
+document.querySelectorAll(".fmt .seg button").forEach(b=>b.onclick=()=>{imgFmt=b.dataset.f;localStorage.setItem("hd_fmt",imgFmt);showFmt()});showFmt();
 function toast(s){const t=$("toast");t.textContent=s;t.style.display="block";setTimeout(()=>t.style.display="none",2500)}
-function blob(){return new Promise(r=>$("cv").toBlob(r,"image/png"))}
+function blob(type){type=type||mime();return new Promise(r=>$("cv").toBlob(r,type,0.92))}
 function bumpNo(){const n=Number($("soHD").value)||0;if(n>=Number(localStorage.getItem("hd_last")||0))localStorage.setItem("hd_last",n)}
 $("btnSave").onclick=async()=>{draw();const b=await blob();const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=fileName();a.click();bumpNo();toast("Đã lưu "+fileName())};
-$("btnShare").onclick=async()=>{draw();const b=await blob();const f=new File([b],fileName(),{type:"image/png"});
+$("btnShare").onclick=async()=>{draw();const b=await blob();const f=new File([b],fileName(),{type:mime()});
  if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],title:"Hoá đơn"});bumpNo()}catch(e){}}
- else if(navigator.clipboard&&window.ClipboardItem){try{await navigator.clipboard.write([new ClipboardItem({"image/png":b})]);bumpNo();toast("Đã chép ảnh, dán (Cmd+V) vào Zalo là gửi được")}catch(e){$("btnSave").click()}}
+ else if(navigator.clipboard&&window.ClipboardItem){try{await navigator.clipboard.write([new ClipboardItem({"image/png":imgFmt==="png"?b:await blob("image/png")})]);bumpNo();toast("Đã chép ảnh, dán (Cmd+V) vào Zalo là gửi được")}catch(e){$("btnSave").click()}}
  else $("btnSave").click()};
 $("btnNew").onclick=()=>{if(!confirm("Xoá form để viết hoá đơn mới?"))return;bumpNo();["khTen","khSdt","khDc","daTT"].forEach(k=>$(k).value="");
  items=[blank()];$("soHD").value=Number(localStorage.getItem("hd_last")||0)+1;$("ngay").value=today();renderItems();update()};
