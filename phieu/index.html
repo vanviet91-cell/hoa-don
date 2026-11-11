@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Phiếu sửa chữa">
+<meta name="theme-color" content="#0f766e">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>Phiếu sửa chữa</title>
+<style>
+:root{--bg:#f3f5f8;--card:#fff;--tx:#111827;--mu:#6b7280;--bd:#e5e7eb;--pri:#0f766e;--ok:#16a34a;--bad:#dc2626;--warn:#d97706;--info:#2563eb}
+@media (prefers-color-scheme:dark){:root{--bg:#0b0f17;--card:#151b26;--tx:#e5e7eb;--mu:#9ca3af;--bd:#263042}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--tx);padding:env(safe-area-inset-top) 0 calc(90px + env(safe-area-inset-bottom))}
+header{padding:12px 16px 4px;display:flex;align-items:center;gap:8px}
+header h1{margin:0;font-size:22px;flex:1}
+header .who{font-size:13px;color:var(--mu);text-align:right}
+main{padding:0 12px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px 14px;margin:10px 0}
+.card h3{margin:0 0 8px;font-size:14px;color:var(--mu);text-transform:uppercase;letter-spacing:.03em}
+.row{display:flex;gap:8px;align-items:center}.sp{flex:1}
+input,select,textarea{font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:10px;width:100%}
+textarea{min-height:64px;resize:vertical}
+button{font:inherit;border:0;border-radius:10px;padding:10px 14px;background:var(--pri);color:#fff;font-weight:600;cursor:pointer}
+button.ghost{background:var(--bg);color:var(--tx);border:1px solid var(--bd)}
+button.bad{background:var(--bad)}button.ok{background:var(--ok)}
+button.sm{padding:6px 10px;font-size:14px}
+button:disabled{opacity:.5}
+.f{margin:9px 0}.f>span{display:block;font-size:13px;color:var(--mu);margin-bottom:4px}
+.seg{display:flex;background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:3px}
+.seg button{flex:1;background:none;color:var(--tx);padding:8px;font-weight:500}
+.seg button.on{background:var(--card);box-shadow:0 1px 3px #0002;font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--bd);background:var(--bg);color:var(--tx);border-radius:999px;padding:6px 12px;font-size:14px;font-weight:500}
+#tkVaiTro .chip{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;font-size:15px}#tkVaiTro input{width:20px;height:20px;margin:0;padding:0;flex:none}
+.chip.on{background:var(--pri);border-color:var(--pri);color:#fff}
+.pc{display:block;background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px 14px;margin:8px 0;cursor:pointer}
+.pc .l1{display:flex;gap:8px;align-items:center}
+.pc .ma{font-weight:700}
+.pc .l2{font-weight:600;margin-top:4px}
+.pc .l3{color:var(--mu);font-size:14px;margin-top:2px;word-break:break-word}
+.tag{font-size:12px;font-weight:700;border-radius:6px;padding:2px 7px;white-space:nowrap}
+.t-sc{background:#dbeafe;color:#1e40af}.t-bh{background:#fef3c7;color:#92400e}
+.st{font-size:12px;font-weight:700;border-radius:999px;padding:3px 9px;white-space:nowrap;margin-left:auto}
+.st0{background:#e0f2fe;color:#075985}.st1{background:#fef3c7;color:#92400e}.st2{background:#dcfce7;color:#166534}.st3{background:#e5e7eb;color:#374151}.st4{background:#fee2e2;color:#991b1b}
+.mu{color:var(--mu);font-size:14px}
+.empty{color:var(--mu);text-align:center;padding:24px 0}
+.hide{display:none!important}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--card);border-top:1px solid var(--bd);padding-bottom:env(safe-area-inset-bottom);z-index:5}
+nav button{flex:1;background:none;color:var(--mu);border-radius:0;padding:10px 0 8px;font-size:12px;font-weight:500}
+nav button b{display:block;font-size:21px;line-height:1.1}
+nav button.on{color:var(--pri)}
+#fab{position:fixed;right:16px;bottom:calc(74px + env(safe-area-inset-bottom));border-radius:999px;padding:14px 20px;box-shadow:0 6px 18px #0004;z-index:6}
+.page{position:fixed;inset:0;background:var(--bg);z-index:20;overflow:auto;padding:env(safe-area-inset-top) 0 calc(24px + env(safe-area-inset-bottom))}
+.page .top{position:sticky;top:0;background:var(--bg);display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--bd);z-index:2}
+.page .top b{flex:1;font-size:18px}
+.kv{display:grid;grid-template-columns:110px 1fr;gap:6px 10px;font-size:15px}
+.kv div:nth-child(odd){color:var(--mu)}
+.kv div{word-break:break-word}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.grid .ph{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;background:var(--bd);display:flex;align-items:center;justify-content:center;color:var(--mu);font-size:12px}
+.grid .ph img{width:100%;height:100%;object-fit:cover;display:block}
+.grid .ph .x{position:absolute;top:3px;right:3px;background:#000a;color:#fff;border-radius:999px;width:26px;height:26px;padding:0;font-size:15px;line-height:26px}
+.grid .ph .gd{position:absolute;left:3px;bottom:3px;background:#000a;color:#fff;border-radius:6px;font-size:11px;padding:1px 5px}
+.tl{border-left:2px solid var(--bd);margin-left:6px;padding-left:12px}
+.tl div{margin:0 0 10px;position:relative;font-size:14px}
+.tl div:before{content:'';position:absolute;left:-18px;top:5px;width:10px;height:10px;border-radius:50%;background:var(--pri)}
+.tl small{color:var(--mu);display:block}
+.acts{display:flex;flex-wrap:wrap;gap:8px}
+.acts button{flex:1 1 45%}
+dialog{border:0;border-radius:16px;padding:16px;width:min(94vw,440px);background:var(--card);color:var(--tx)}
+dialog::backdrop{background:#0007}
+#xemAnh{padding:0;background:#000;width:100vw;max-width:100vw;height:100vh;max-height:100vh;border-radius:0}
+#xemAnh img{width:100%;height:100%;object-fit:contain}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(140px + env(safe-area-inset-bottom));background:#111827ee;color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;z-index:100;max-width:90vw;text-align:center}
+img.xemPhieu{display:block;width:100%;border:1px solid var(--bd);border-radius:8px;background:#fff}
+#manTai{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;z-index:99;color:var(--mu)}
+.login{max-width:380px;margin:12vh auto 0;padding:0 16px}
+.login h2{margin:0 0 4px}
+.tk{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--bd)}
+.tk:first-child{border-top:0}
+#in{display:none}
+@media print{
+  body{padding:0;background:#fff;color:#000}
+  body>*:not(#in){display:none!important}
+  #in{display:block;font:13px/1.45 Arial,sans-serif;color:#000;padding:8mm}
+  #in .dau{display:flex;justify-content:space-between;align-items:flex-end;gap:8px}#in .so{text-align:right}
+  #in h2{margin:0;font-size:18px}
+  #in.k80{padding:0;width:74mm;font-size:12px}#in.k80 .dau{display:block}#in.k80 .so{text-align:left;margin-top:4px}#in.k80 h2{font-size:14px}
+  #in.k80 td{padding:3px 4px}#in.k80 td:first-child{width:36%;background:none;font-weight:bold}#in.k80 .ky div{height:70px}#in table{width:100%;border-collapse:collapse;margin-top:8px}
+  #in td{border:1px solid #999;padding:5px 7px;vertical-align:top}#in td:first-child{width:32%;background:#f3f3f3}
+  #in .ky{display:flex;justify-content:space-between;margin-top:14px;text-align:center}#in .ky div{width:45%;height:90px}
+  #in .anhs{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}#in .anhs img{width:32%;height:auto}
+}
+</style>
+<style id="cssIn"></style>
+</head>
+<body>
+<div id="manTai"><b>Phiếu sửa chữa</b><span>Đang tải...</span></div>
+<div id="toast" class="hide"></div>
+
+<!-- ĐĂNG NHẬP / TẠO QUẢN LÝ ĐẦU TIÊN -->
+<section id="scLogin" class="hide">
+  <div class="login">
+    <h2 id="lgTieuDe">Đăng nhập</h2>
+    <div class="mu" id="lgCuaHang"></div>
+    <form class="card" id="lgForm" method="post" action="#" onsubmit="event.preventDefault();guiDangNhap()">
+      <div class="f hide" id="lgTenO"><span>Họ tên của anh/chị</span><input id="lgTen" autocomplete="name"></div>
+      <div class="f"><span>Tên đăng nhập</span><input id="lgUser" name="username" autocapitalize="off" autocorrect="off" autocomplete="username"></div>
+      <div class="f"><span>Mật khẩu</span><input id="lgPass" name="password" type="password" autocomplete="current-password"></div>
+      <button id="lgBtn" type="submit" style="width:100%;margin-top:6px">Đăng nhập</button>
+      <div class="mu hide" id="lgGhiChu" style="margin-top:8px">Lần đầu dùng app: tạo tài khoản Quản lý. Sau đó vào mục Tài khoản để tạo tài khoản cho nhân viên.</div>
+    </form>
+    <a class="card hide banMoi" href="#" target="_blank" style="display:block;border:1px solid #0f766e;text-decoration:none;color:inherit"><b>📲 Đã có bản app cài trên máy</b><div class="mu" style="margin-top:4px">Bấm vào đây để mở bản app mới, rồi Thêm vào màn hình chính.</div></a>
+    <div class="card hide" id="lgCai" style="border:1px solid #2563eb55"><b>Nên cài thành app trước khi đăng nhập</b><div class="mu" id="lgCaiND" style="margin-top:6px;line-height:1.5"></div></div>
+  </div>
+</section>
+
+<!-- APP CHÍNH -->
+<section id="scApp" class="hide">
+  <header><h1 id="tieuDe">Phiếu sửa chữa</h1><div class="who" id="who"></div></header>
+  <main>
+    <div id="tab-phieu">
+      <a class="card hide banMoi" href="#" target="_blank" style="display:block;border:1px solid #0f766e;text-decoration:none;color:inherit"><b>📲 Đã có bản app cài trên máy</b><div class="mu" style="margin-top:4px">Bấm vào đây để mở bản app mới, rồi Thêm vào màn hình chính.</div></a>
+      <div class="card hide" id="goiYCai" style="border:1px solid #2563eb55">
+        <div class="row"><b class="sp">Cài thành app trên điện thoại</b><button class="ghost sm" type="button" onclick="anGoiYCai()">Đóng</button></div>
+        <div class="mu" id="goiYCaiND" style="margin-top:6px;line-height:1.5"></div>
+      </div>
+      <div class="card" style="padding:10px">
+        <input id="timKiem" type="search" placeholder="Tìm mã phiếu, tên, SĐT, IMEI, sản phẩm" oninput="veDs()">
+        <div class="chips" id="locTT" style="margin-top:8px"></div>
+      </div>
+      <div id="ds"></div>
+    </div>
+    <div id="tab-taikhoan" class="hide">
+      <div class="card"><h3>Tài khoản của tôi</h3><div id="toiInfo"></div>
+        <div class="row" style="margin-top:10px"><button class="ghost sm" onclick="moDoiMK()">Đổi mật khẩu</button><span class="sp"></span><button class="ghost sm" onclick="dangXuatApp()">Đăng xuất</button></div></div>
+      <div class="card" id="qlTK"><div class="row"><h3 class="sp" style="margin:0">Tài khoản nhân viên</h3><button class="sm" onclick="moTK()">+ Thêm</button></div><div id="dsTK" style="margin-top:8px"></div>
+        <div class="mu" style="margin-top:8px">Quản lý: toàn quyền, xoá phiếu, quản lý tài khoản. Tiếp nhận: tạo phiếu, cập nhật, trả máy. Kỹ thuật: xem, cập nhật tình trạng sửa, thêm ảnh.</div></div>
+    </div>
+  </main>
+  <button id="fab" onclick="moForm()">+ Tiếp nhận máy</button>
+  <nav>
+    <button data-tab="phieu" class="on" onclick="moTab('phieu')"><b>📋</b>Phiếu</button>
+    <button data-tab="taikhoan" onclick="moTab('taikhoan')"><b>👤</b>Tài khoản</button>
+  </nav>
+</section>
+
+<!-- FORM TIẾP NHẬN / SỬA -->
+<div class="page hide" id="pgForm" oninput="xemTruoc()" onchange="xemTruoc()">
+  <div class="top"><button class="ghost sm" onclick="dongForm()">‹ Huỷ</button><b id="fmTieuDe">Tiếp nhận máy</b><button class="sm" id="fmLuu" onclick="luuForm()">Lưu</button></div>
+  <main>
+    <div class="card">
+      <div class="seg" id="fmLoai"><button data-v="Sửa chữa" class="on">Sửa chữa</button><button data-v="Bảo hành">Bảo hành</button></div>
+    </div>
+    <div class="card"><h3>Khách hàng</h3>
+      <div class="f"><span>Tên khách *</span><input id="fmKhTen"></div>
+      <div class="f"><span>Số điện thoại</span><input id="fmKhSdt" type="tel" inputmode="tel"></div>
+      <div class="f"><span>Địa chỉ</span><input id="fmKhDiaChi"></div>
+    </div>
+    <div class="card"><h3>Sản phẩm</h3>
+      <div class="f"><span>Loại sản phẩm</span><select id="fmNhom" onchange="doiNhom(this.value)"></select></div>
+      <div class="f"><span>Tên sản phẩm, model *</span><input id="fmSanPham" placeholder="Ví dụ: Roborock Qrevo 2 Pro"></div>
+      <div class="f"><span>IMEI / Serial</span><div class="row"><input id="fmImei" autocapitalize="characters" autocorrect="off"><button class="ghost" type="button" style="white-space:nowrap" onclick="moQuet()">📷 Quét</button></div></div>
+      <div class="f"><span>Lỗi khách báo</span><textarea id="fmLoi" placeholder="Ví dụ: không nhận sạc, báo lỗi 14"></textarea></div>
+      <div class="f"><span>Tình trạng máy khi nhận</span><textarea id="fmTinhTrang" placeholder="Ví dụ: trầy nhẹ nắp trên, nứt góc đế sạc"></textarea>
+        <div id="fmTTAnhO"><div class="grid" id="fmAnhTT" style="margin-top:8px"></div>
+        <button class="ghost" type="button" style="width:100%;margin-top:8px" onclick="$('fileTT').click()">📷 Chụp ảnh tình trạng máy</button>
+        <input type="file" id="fileTT" accept="image/*" multiple class="hide" onchange="chonAnhForm(this,'tt')"></div></div>
+    </div>
+    <div class="card"><h3>Phụ kiện đi kèm</h3>
+      <div class="mu" id="fmPKGoiY" style="margin:-2px 0 8px"></div>
+      <div class="chips" id="fmPK"></div>
+      <div class="row" style="margin-top:8px"><input id="fmPKKhac" placeholder="Phụ kiện khác"><button class="ghost sm" onclick="themPK()">Thêm</button></div>
+    </div>
+    <div class="card"><h3>Hẹn trả và chi phí</h3>
+      <div class="f"><span>Ngày hẹn trả</span><input id="fmHenTra" type="date"></div>
+      <div class="f"><span>Chi phí dự kiến (đ)</span><input id="fmChiPhi" inputmode="numeric" oninput="dinhDang(this)"></div>
+      <div class="f"><span>Ghi chú</span><textarea id="fmGhiChu"></textarea></div>
+    </div>
+    <div class="card" id="fmAnhO"><h3>Ảnh lúc nhận máy</h3>
+      <div class="grid" id="fmAnh"></div>
+      <button class="ghost" style="width:100%;margin-top:8px" onclick="$('fileForm').click()">📷 Chụp hoặc chọn ảnh</button>
+      <div class="mu" style="margin-top:6px">Ảnh được đóng dấu mã phiếu, ngày giờ và người tiếp nhận.</div>
+      <input type="file" id="fileForm" accept="image/*" multiple class="hide" onchange="chonAnhForm(this,'nhan')">
+    </div>
+    <div class="card"><h3>Xem trước phiếu tiếp nhận</h3><img id="fmXem" class="xemPhieu" alt="Phiếu tiếp nhận"></div>
+  </main>
+</div>
+
+<!-- CHI TIẾT PHIẾU -->
+<div class="page hide" id="pgCT">
+  <div class="top"><button class="ghost sm" onclick="dongCT()">‹ Danh sách</button><b id="ctMa"></b><button class="ghost sm" onclick="moIn()">🖨 In</button></div>
+  <main id="ctNoiDung"></main>
+  <input type="file" id="fileCT" accept="image/*" multiple class="hide" onchange="chonAnhCT(this)">
+</div>
+
+<dialog id="dlgTT"><form method="dialog" onsubmit="return false">
+  <h3 style="margin-top:0">Cập nhật tình trạng</h3>
+  <div class="f"><span>Trạng thái</span><select id="ttChon"></select></div>
+  <div class="f"><span>Ghi chú (kỹ thuật kiểm tra, linh kiện thay...)</span><textarea id="ttGhi"></textarea></div>
+  <div class="row"><button class="ghost sp" type="button" onclick="$('dlgTT').close()">Huỷ</button><button class="sp" type="button" onclick="guiTT()">Lưu</button></div>
+</form></dialog>
+
+<dialog id="dlgTra"><form method="dialog" onsubmit="return false">
+  <h3 style="margin-top:0">Trả máy cho khách</h3>
+  <div class="mu" id="traTom"></div>
+  <div class="f"><span>Kết quả</span><textarea id="traKQ" placeholder="Ví dụ: đã thay pin, máy chạy bình thường"></textarea></div>
+  <div class="f"><span>Chi phí thực thu (đ)</span><input id="traTien" inputmode="numeric" oninput="dinhDang(this)"></div>
+  <div class="mu">Người trả máy: <b id="traNguoi"></b>, thời gian ghi tự động.</div>
+  <div class="row" style="margin-top:12px"><button class="ghost sp" type="button" onclick="$('dlgTra').close()">Huỷ</button><button class="ok sp" type="button" onclick="guiTra()">Xác nhận trả máy</button></div>
+</form></dialog>
+
+<dialog id="dlgTK"><form method="dialog" onsubmit="return false">
+  <h3 style="margin-top:0" id="tkTieuDe">Tài khoản</h3>
+  <div class="f"><span>Họ tên</span><input id="tkTen"></div>
+  <div class="f"><span>Tên đăng nhập</span><input id="tkUser" autocapitalize="off" autocorrect="off"></div>
+  <div class="f"><span>Vai trò (chọn được nhiều)</span><div class="chips" id="tkVaiTro"><label class="chip"><input type="checkbox" value="tiepnhan"> Tiếp nhận</label><label class="chip"><input type="checkbox" value="kythuat"> Kỹ thuật</label><label class="chip"><input type="checkbox" value="quanly"> Quản lý</label></div></div>
+  <div class="f"><span id="tkMKNhan">Mật khẩu</span><input id="tkMK" type="text" autocapitalize="off" autocorrect="off"></div>
+  <label class="row hide" id="tkKhoaO" style="margin:8px 0"><input type="checkbox" id="tkKhoa" style="width:22px;height:22px"> Khoá tài khoản (không đăng nhập được)</label>
+  <div class="row"><button class="ghost sp" type="button" onclick="$('dlgTK').close()">Huỷ</button><button class="sp" type="button" onclick="guiTK()">Lưu</button></div>
+</form></dialog>
+
+<dialog id="dlgMK"><form method="dialog" onsubmit="return false">
+  <h3 style="margin-top:0">Đổi mật khẩu</h3>
+  <div class="f"><span>Mật khẩu cũ</span><input id="mkCu" type="password"></div>
+  <div class="f"><span>Mật khẩu mới (tối thiểu 6 ký tự)</span><input id="mkMoi" type="password"></div>
+  <div class="row"><button class="ghost sp" type="button" onclick="$('dlgMK').close()">Huỷ</button><button class="sp" type="button" onclick="guiMK()">Lưu</button></div>
+</form></dialog>
+
+<dialog id="dlgQuet" style="padding:12px">
+  <h3 style="margin:0 0 8px">Quét IMEI / Serial</h3>
+  <div style="position:relative;background:#000;border-radius:10px;overflow:hidden;aspect-ratio:4/3">
+    <video id="qVideo" playsinline muted autoplay style="width:100%;height:100%;object-fit:cover"></video>
+    <div style="position:absolute;left:8%;right:8%;top:38%;height:24%;border:2px solid #22c55e;border-radius:8px;box-shadow:0 0 0 999px #0005"></div>
+  </div>
+  <div class="mu" id="qTT" style="margin:8px 0">Đưa mã vạch hoặc mã QR vào khung xanh.</div>
+  <button class="ghost" type="button" style="width:100%" onclick="$('fileQuet').click()">📷 Chụp ảnh mã vạch để đọc</button>
+  <input type="file" id="fileQuet" accept="image/*" capture="environment" class="hide" onchange="quetAnh(this)">
+  <button class="ghost" type="button" style="width:100%;margin-top:8px" onclick="dongQuet()">Đóng</button>
+</dialog>
+<dialog id="dlgIn"><form method="dialog" onsubmit="return false">
+  <h3 style="margin-top:0">In phiếu</h3>
+  <div class="f"><span>Khổ giấy</span><select id="inKho" onchange="doiKho()"><option value="A5">A5 (nửa tờ A4)</option><option value="A4">A4</option><option value="K80">Giấy in nhiệt 80mm</option></select></div>
+  <label class="row" id="inAnhO" style="margin:8px 0"><input type="checkbox" id="inAnh" style="width:22px;height:22px"> In kèm ảnh tình trạng và ảnh lúc nhận</label>
+  <button style="width:100%" type="button" onclick="inPhieu()">🖨 In qua máy in Wifi</button>
+  <div class="mu" style="margin:6px 0 12px">Điện thoại và máy in cần chung một mạng Wifi. iPhone tìm máy in AirPrint, Android tìm máy in qua Mopria hoặc ứng dụng của hãng máy in. Bấm In, chọn máy in, rồi In.</div>
+  <button class="ghost" style="width:100%" type="button" onclick="anhPhieu()">Lưu phiếu thành ảnh</button>
+  <div class="mu" style="margin-top:6px">Dùng khi không hiện hộp in, hoặc khi máy in chỉ in được qua ứng dụng riêng của hãng.</div>
+  <button class="ghost" style="width:100%;margin-top:12px" type="button" onclick="$('dlgIn').close()">Đóng</button>
+</form></dialog>
+<dialog id="dlgAnhPhieu" style="padding:10px">
+  <div class="mu" style="margin-bottom:8px">Nhấn giữ vào ảnh, chọn Chia sẻ rồi In (hoặc Lưu vào Ảnh để in bằng ứng dụng máy in).</div>
+  <img id="anhPhieuImg" alt="Phiếu" style="width:100%;border:1px solid var(--bd);border-radius:8px">
+  <button class="ghost" style="width:100%;margin-top:8px" onclick="$('dlgAnhPhieu').close()">Đóng</button>
+</dialog>
+<dialog id="xemAnh" onclick="this.close()"><img id="xemAnhImg" alt=""></dialog>
+<div id="in"></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const tien=n=>Number(n||0).toLocaleString('vi-VN')+'đ';
+const so=s=>parseInt(String(s||'').replace(/\D/g,''))||0;
+function dinhDang(el){const n=so(el.value);el.value=n?n.toLocaleString('vi-VN'):''}
+function gio(s){const m=String(s||'').match(/^(\d{4})-(\d\d)-(\d\d)[ T](\d\d):(\d\d)/);return m?`${m[4]}:${m[5]} ${m[3]}/${m[2]}/${m[1]}`:esc(s)}
+function ngay(s){const m=String(s||'').match(/^(\d{4})-(\d\d)-(\d\d)/);return m?`${m[3]}/${m[2]}/${m[1]}`:esc(s)}
+function toast(t,ms){const e=$('toast');e.textContent=t;e.classList.remove('hide');clearTimeout(toast.h);toast.h=setTimeout(()=>e.classList.add('hide'),ms||2600)}
+const NHOM_SP={
+  'Robot hút bụi':['Đế sạc / dock','Dây nguồn','Adapter','Remote','Chổi chính','Chổi cạnh','Giẻ lau','Khay lau','Túi bụi','Hộp bụi','Màng lọc','Bình nước','Hộp','Hoá đơn'],
+  'Cây lau nhà cầm tay':['Đế sạc','Sạc / adapter','Pin','Đầu lau / con lăn','Bàn chải','Bình nước sạch','Bình nước bẩn','Màng lọc','Khay vệ sinh','Hộp','Hoá đơn'],
+  'Tivi':['Dây nguồn','Điều khiển','Chân đế','Ốc chân đế','Giá treo','Dây HDMI','Adapter','Hộp','Hoá đơn'],
+  'Tủ lạnh':['Khay đá','Kệ / ngăn kính','Hộc rau','Dây nguồn','Sách hướng dẫn','Hoá đơn'],
+  'Máy giặt':['Dây cấp nước','Ống xả','Chân kê / đế','Ốc khoá vận chuyển','Nắp chống chuột','Hộc bột giặt','Dây nguồn','Hoá đơn'],
+  'Máy sấy quần áo':['Ống thoát khí','Ống thoát nước','Bộ chồng máy','Lưới lọc xơ vải','Dây nguồn','Hoá đơn'],
+  'Lò vi sóng':['Đĩa quay thuỷ tinh','Vòng xoay','Vỉ nướng','Dây nguồn','Hoá đơn'],
+  'Quạt điện':['Điều khiển','Lồng quạt','Cánh quạt','Chân đế','Adapter','Hộp','Hoá đơn'],
+  'Máy lọc không khí':['Màng lọc','Điều khiển','Dây nguồn','Adapter','Hộp','Hoá đơn'],
+  'Máy lọc nước':['Lõi lọc','Vòi','Dây cấp nước','Van cấp','Bình áp','Adapter','Hoá đơn'],
+  'Cây nước nóng lạnh':['Bình nước','Vòi','Khay hứng nước','Dây nguồn','Hoá đơn'],
+  'Đồ gia dụng nhỏ':['Dây nguồn','Sạc / adapter','Nắp','Lòng nồi / cối','Dao / lưỡi','Hộp','Hoá đơn'],
+  'Khác':['Dây nguồn','Sạc / adapter','Điều khiển','Hộp','Hoá đơn']};
+const PK_MAC_DINH=NHOM_SP['Khác'];
+const GD={nhan:'Lúc nhận',tt:'Tình trạng',sua:'Khi sửa',tra:'Lúc trả'};
+let GD_CT='';let TOKEN=localStorage.getItem('psc_token')||'',U=null,HT=null,DS=[],LOC='dang',CT=null,FM=null,ANH_CACHE={};
+
+/* gọi máy chủ: trả Promise */
+const API=['https:','','script.google.com','macros','s','AKfycbyZRX-rooZXkOnrrRhi1nT6QX584v5Wqc0-Ux1WGp9NXPKBKJ3tSEJpjdGdfVog9Db4','exec'].join('/');
+const APP_URL=['https:','','vanviet91-cell.github.io','hoa-don','phieu',''].join('/');
+const TRONG_GAS=!!(window.google&&google.script&&google.script.run);
+function goi(fn,...args){if(!TRONG_GAS)return goiAPI(fn,args);return new Promise((ok,loi)=>{google.script.run.withSuccessHandler(ok).withFailureHandler(e=>{
+  const m=String(e&&e.message||e);if(m.indexOf('PHIEN_HET')>=0){hetPhien();return}loi(new Error(m.replace(/^Error:\s*/,'')))})[fn](...args)})}
+async function goiAPI(fn,args){let j;
+  try{const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({fn,args}),redirect:'follow'});
+    if(!r.ok)throw new Error('mã '+r.status);j=await r.json()}
+  catch(e){throw new Error(navigator.onLine===false?'Máy đang không có mạng':'Không kết nối được máy chủ ('+e.message+')')}
+  if(j.ok)return j.r;const m=String(j.e||'Lỗi');if(m.indexOf('PHIEN_HET')>=0){hetPhien();return new Promise(()=>{})}
+  throw new Error(m.replace(/^Error:\s*/,''))}
+function baoLoi(e){toast(e.message||String(e),4000)}
+function hetPhien(){TOKEN='';localStorage.removeItem('psc_token');localStorage.removeItem('psc_cache');document.querySelectorAll('dialog[open]').forEach(d=>d.close());['pgForm','pgCT'].forEach(i=>$(i).classList.add('hide'));hienLogin();toast('Phiên đăng nhập đã hết, mời đăng nhập lại')}
+
+/* ---------- KHỞI ĐỘNG / ĐĂNG NHẬP ---------- */
+async function khoiDong(){
+  if(TRONG_GAS)document.querySelectorAll('.banMoi').forEach(a=>{a.href=APP_URL;a.classList.remove('hide')});
+  /* hiện ngay danh sách đã lưu trên máy từ lần trước, rồi cập nhật từ máy chủ */
+  let nhanh=false;
+  if(TOKEN){try{const c=JSON.parse(localStorage.getItem('psc_cache')||'null');
+    if(c&&c.user&&Array.isArray(c.phieu)){HT=c.ht;U=c.user;DS=c.phieu;$('manTai').style.display='none';vaoApp();nhanh=true}}catch(e){}}
+  let r;try{r=await goi('moApp',TOKEN||'')}catch(e){if(nhanh){toast('Chưa cập nhật được: '+e.message);return}
+    $('manTai').querySelector('span').textContent='Không tải được: '+e.message;return}
+  HT=r.ht;$('manTai').style.display='none';
+  if(r.user){U=r.user;DS=r.phieu;luuCache();if(nhanh){veDs();if(CT){CT=DS.find(p=>p.id===CT.id)||CT}}else vaoApp();return}
+  if(r.hetPhien){TOKEN='';localStorage.removeItem('psc_token');localStorage.removeItem('psc_cache');if(nhanh){$('scApp').classList.add('hide');toast('Phiên đăng nhập đã hết, đăng nhập lại.')}}
+  hienLogin()}
+function luuCache(){try{localStorage.setItem('psc_cache',JSON.stringify({ht:HT,user:U,phieu:DS}))}catch(e){}}
+function hienLogin(){$('scApp').classList.add('hide');$('scLogin').classList.remove('hide');
+  const dau=HT&&!HT.coTaiKhoan;$('lgCuaHang').textContent=HT?HT.tenCuaHang:'';
+  $('lgTieuDe').textContent=dau?'Tạo tài khoản Quản lý':'Đăng nhập';$('lgBtn').textContent=dau?'Tạo tài khoản':'Đăng nhập';
+  $('lgTenO').classList.toggle('hide',!dau);$('lgGhiChu').classList.toggle('hide',!dau);$('lgPass').autocomplete=dau?'new-password':'current-password';
+  const app=navigator.standalone||matchMedia('(display-mode: standalone)').matches;$('lgCaiND').innerHTML=huongDanCai();$('lgCai').classList.toggle('hide',!!app);
+  if(!dau&&!$('lgUser').value)$('lgUser').value=localStorage.getItem('psc_user')||''}
+async function guiDangNhap(){const u=$('lgUser').value.trim(),p=$('lgPass').value;if(!u||!p){toast('Nhập tên đăng nhập và mật khẩu');return}
+  $('lgBtn').disabled=true;
+  try{const r=HT.coTaiKhoan?await goi('dangNhap',u,p):await goi('taoQuanLyDauTien',$('lgTen').value.trim(),u,p);
+    HT.coTaiKhoan=true;TOKEN=r.token;localStorage.setItem('psc_token',TOKEN);localStorage.setItem('psc_user',u);U=r.user;$('lgPass').value='';
+    const d=await goi('dsPhieu',TOKEN);DS=d.phieu;luuCache();vaoApp()}catch(e){baoLoi(e)}finally{$('lgBtn').disabled=false}}
+function vaoApp(){$('scLogin').classList.add('hide');$('scApp').classList.remove('hide');
+  $('who').innerHTML=`<b>${esc(U.ten)}</b><br>${esc(U.tenVaiTro)}`;
+  $('fab').classList.toggle('hide',!coQuyen('tao'));$('qlTK').classList.toggle('hide',!laQL());moTab('phieu');
+  const app=navigator.standalone||matchMedia('(display-mode: standalone)').matches;
+  $('goiYCaiND').innerHTML=huongDanCai();
+  $('goiYCai').classList.toggle('hide',app||localStorage.getItem('psc_an_cai')==='1')}
+function huongDanCai(){const ua=navigator.userAgent,ios=/iPhone|iPad|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1),adr=/Android/.test(ua);
+  if(/Zalo|FBAN|FBAV|FB_IAB|Messenger|Instagram|Line\b/i.test(ua))return 'Anh/chị đang mở trong Zalo hoặc Facebook nên chưa cài được. Bấm nút <b>⋯</b> ở góc trên, chọn <b>Mở bằng trình duyệt</b>'+(ios?' (Safari)':adr?' (Chrome)':'')+', rồi làm theo hướng dẫn hiện ra.';
+  if(ios&&/CriOS|FxiOS|EdgiOS/.test(ua))return 'Bấm nút <b>Chia sẻ</b> trên thanh địa chỉ, chọn <b>Thêm vào MH chính</b> rồi bấm <b>Thêm</b>. Nếu không thấy mục này, mở link bằng <b>Safari</b>.';
+  if(ios)return '1. Bấm nút <b>Chia sẻ</b> (ô vuông có mũi tên lên) ở thanh dưới.<br>2. Kéo xuống, chọn <b>Thêm vào MH chính</b>.<br>3. Bấm <b>Thêm</b>. Biểu tượng app hiện trên màn hình.';
+  if(adr)return '1. Bấm nút <b>⋮</b> ở góc trên bên phải Chrome.<br>2. Chọn <b>Thêm vào màn hình chính</b> (hoặc <b>Cài đặt ứng dụng</b>).<br>3. Bấm <b>Thêm</b>. Biểu tượng app hiện trên màn hình.';
+  return 'Mở link này trên điện thoại: iPhone dùng Safari, Android dùng Chrome, rồi thêm vào màn hình chính.'}
+function anGoiYCai(){localStorage.setItem('psc_an_cai','1');$('goiYCai').classList.add('hide')}
+function vtU(){return String(U&&U.vaiTro||'').split(',')}
+function laQL(){return vtU().indexOf('quanly')>=0}
+function coQuyen(v){const r=vtU();if(r.indexOf('quanly')>=0)return true;
+  if(v==='tao'||v==='sua'||v==='tra')return r.indexOf('tiepnhan')>=0;if(v==='xoa'||v==='tk')return false;return true}
+async function dangXuatApp(){if(!confirm('Đăng xuất khỏi máy này?'))return;try{await goi('dangXuat',TOKEN)}catch(e){}TOKEN='';localStorage.removeItem('psc_token');localStorage.removeItem('psc_cache');U=null;hienLogin()}
+
+/* ---------- TAB ---------- */
+function moTab(t){['phieu','taikhoan'].forEach(x=>$('tab-'+x).classList.toggle('hide',x!==t));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));
+  $('tieuDe').textContent=t==='phieu'?'Phiếu sửa chữa':'Tài khoản';
+  $('fab').classList.toggle('hide',t!=='phieu'||!coQuyen('tao'));
+  if(t==='phieu')veDs();else veTaiKhoan()}
+async function taiLaiDs(){try{const r=await goi('dsPhieu',TOKEN);DS=r.phieu;U=r.user;veDs()}catch(e){baoLoi(e)}}
+
+/* ---------- DANH SÁCH ---------- */
+const NHOM_LOC=[['dang','Đang xử lý'],['xong','Chờ trả'],['tra','Đã trả'],['tat','Tất cả']];
+function nhomTT(t){if(t==='Đã trả khách')return'tra';if(t==='Đã sửa xong'||t==='Không sửa được')return'xong';return'dang'}
+function lopTT(t){return{'Đã tiếp nhận':'st0','Đang kiểm tra':'st1','Đang sửa':'st1','Gửi hãng':'st1','Chờ linh kiện':'st1','Đã sửa xong':'st2','Không sửa được':'st4','Đã trả khách':'st3'}[t]||'st0'}
+function boDau(s){return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/đ/g,'d').replace(/Đ/g,'D').toLowerCase()}
+function veDs(){
+  const dem={dang:0,xong:0,tra:0,tat:DS.length};DS.forEach(p=>dem[nhomTT(p.trangThai)]++);
+  $('locTT').innerHTML=NHOM_LOC.map(([k,t])=>`<button class="chip ${LOC===k?'on':''}" onclick="LOC='${k}';veDs()">${t} (${dem[k]})</button>`).join('');
+  const q=boDau($('timKiem').value.trim());
+  const ds=DS.filter(p=>(LOC==='tat'||nhomTT(p.trangThai)===LOC)&&(!q||boDau([p.ma,p.khTen,p.khSdt,p.imei,p.sanPham,p.nhomSP].join(' ')).includes(q)));
+  $('ds').innerHTML=ds.length?ds.map(p=>`<div class="pc" onclick="moCT('${esc(p.id)}')">
+    <div class="l1"><span class="ma">${esc(p.ma)}</span><span class="tag ${p.loai==='Bảo hành'?'t-bh':'t-sc'}">${esc(p.loai)}</span><span class="st ${lopTT(p.trangThai)}">${esc(p.trangThai)}</span></div>
+    <div class="l2">${esc(p.sanPham)}${p.nhomSP?` <span class="mu" style="font-weight:400">· ${esc(p.nhomSP)}</span>`:''}</div>
+    <div class="l3">${esc(p.khTen)}${p.khSdt?' · '+esc(p.khSdt):''}${p.imei?' · IMEI '+esc(p.imei):''}</div>
+    <div class="l3">Nhận ${gio(p.lucNhan)} · ${esc(p.nguoiNhan)}${p.henTra&&p.trangThai!=='Đã trả khách'?' · hẹn '+ngay(p.henTra):''}${p.anh&&p.anh.length?' · 📷 '+p.anh.length:''}</div></div>`).join('')
+    :`<div class="empty">${DS.length?'Không có phiếu khớp.':'Chưa có phiếu nào. Bấm "+ Tiếp nhận máy" để tạo phiếu đầu tiên.'}</div>`}
+
+/* ---------- ẢNH: thu nhỏ + đóng dấu ---------- */
+function docAnh(file){return new Promise((ok,loi)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>ok({im,u});im.onerror=()=>{URL.revokeObjectURL(u);loi(new Error('Không đọc được ảnh'))};im.src=u})}
+async function dongDau(file,dong1,dong2){
+  const {im,u}=await docAnh(file);const MAX=1600;let w=im.naturalWidth,h=im.naturalHeight;const k=Math.min(1,MAX/Math.max(w,h));w=Math.round(w*k);h=Math.round(h*k);
+  const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');g.drawImage(im,0,0,w,h);URL.revokeObjectURL(u);
+  const fs=Math.max(14,Math.round(Math.min(w,h)/26)),pad=Math.round(fs*.5),bh=fs*2+pad*3;
+  g.fillStyle='rgba(0,0,0,.55)';g.fillRect(0,h-bh,w,bh);g.fillStyle='#fff';g.textBaseline='top';
+  g.font=`bold ${fs}px -apple-system,Arial,sans-serif`;g.fillText(dong1,pad,h-bh+pad,w-pad*2);
+  g.font=`${fs}px -apple-system,Arial,sans-serif`;g.fillText(dong2,pad,h-bh+pad*2+fs,w-pad*2);
+  return c.toDataURL('image/jpeg',.8)}
+function nhanGio(d){const z=n=>('0'+n).slice(-2);return`${z(d.getHours())}:${z(d.getMinutes())}:${z(d.getSeconds())} ${z(d.getDate())}/${z(d.getMonth()+1)}/${d.getFullYear()}`}
+async function taiAnhLen(p,ds,gd){let n=0;
+  for(const a of ds){n++;toast(`Đang tải ảnh ${n}/${ds.length}...`,60000);
+    try{const url=await dongDau(a.file,`${p.ma} · ${GD[a.gd||gd]} · ${p.sanPham}`.slice(0,90),`${nhanGio(a.luc)} · ${U.ten}`);
+      p=await goi('taiAnh',TOKEN,p.id,url,a.gd||gd,nhanGio(a.luc))}catch(e){toast('Ảnh '+n+' lỗi: '+e.message,5000);await new Promise(r=>setTimeout(r,1500))}}
+  toast('Đã tải xong ảnh');return p}
+
+/* ---------- FORM ---------- */
+function moForm(p){FM={id:p?p.id:'',anh:[],pk:p?[...(p.phuKien||[])]:[],loai:p?p.loai:'Sửa chữa'};
+  $('fmTieuDe').textContent=p?'Sửa phiếu '+p.ma:'Tiếp nhận máy';
+  const g=(id,v)=>$(id).value=v||'';
+  FM.nhom=p?p.nhomSP||'':'';$('fmNhom').innerHTML='<option value="">Chọn loại để gợi ý phụ kiện</option>'+Object.keys(NHOM_SP).map(k=>`<option ${k===FM.nhom?'selected':''}>${esc(k)}</option>`).join('');
+  g('fmKhTen',p&&p.khTen);g('fmKhSdt',p&&p.khSdt);g('fmKhDiaChi',p&&p.khDiaChi);g('fmSanPham',p&&p.sanPham);g('fmImei',p&&p.imei);
+  g('fmLoi',p&&p.loi);g('fmTinhTrang',p&&p.tinhTrang);g('fmHenTra',p&&p.henTra);g('fmGhiChu',p&&p.ghiChu);g('fmPKKhac','');
+  $('fmChiPhi').value=p&&p.chiPhiDK?Number(p.chiPhiDK).toLocaleString('vi-VN'):'';
+  $('fmAnhO').classList.toggle('hide',!!p);$('fmTTAnhO').classList.toggle('hide',!!p);veLoai();vePK();veAnhForm();xemTruoc();$('pgForm').classList.remove('hide');$('pgForm').scrollTop=0}
+function dongForm(){if(FM&&FM.anh.length&&!confirm('Bỏ phiếu đang nhập và các ảnh đã chụp?'))return;$('pgForm').classList.add('hide');FM=null}
+document.querySelectorAll('#fmLoai button').forEach(b=>b.onclick=()=>{FM.loai=b.dataset.v;veLoai()});
+function veLoai(){xemTruoc();document.querySelectorAll('#fmLoai button').forEach(b=>b.classList.toggle('on',b.dataset.v===FM.loai))}
+function doiNhom(v){FM.nhom=v;vePK()}
+function vePK(){xemTruoc();const goiY=NHOM_SP[FM.nhom]||PK_MAC_DINH;const tat=[...new Set([...goiY,...FM.pk])];
+  $('fmPKGoiY').textContent=FM.nhom?'Gợi ý cho '+FM.nhom+'. Bấm chọn món khách gửi kèm:':'Chọn Loại sản phẩm ở trên để có gợi ý sát hơn.';
+  $('fmPK').innerHTML=tat.map(t=>`<button class="chip ${FM.pk.includes(t)?'on':''}" data-t="${esc(t)}" onclick="batPK(this.dataset.t)">${FM.pk.includes(t)?'✓ ':''}${esc(t)}</button>`).join('')}
+function batPK(t){const i=FM.pk.indexOf(t);if(i<0)FM.pk.push(t);else FM.pk.splice(i,1);vePK()}
+function themPK(){const t=$('fmPKKhac').value.trim();if(!t)return;if(!FM.pk.includes(t))FM.pk.push(t);$('fmPKKhac').value='';vePK()}
+function chonAnhForm(inp,gd){[...inp.files].forEach(f=>FM.anh.push({file:f,luc:new Date(),url:URL.createObjectURL(f),gd}));inp.value='';veAnhForm()}
+function veAnhForm(){const o=gd=>FM.anh.map((a,i)=>a.gd!==gd?'':`<div class="ph"><img src="${a.url}" alt=""><button class="x" onclick="boAnhForm(${i})">×</button><span class="gd">${nhanGio(a.luc).slice(0,5)}</span></div>`).join('');
+  $('fmAnh').innerHTML=o('nhan');$('fmAnhTT').innerHTML=o('tt')}
+function boAnhForm(i){URL.revokeObjectURL(FM.anh[i].url);FM.anh.splice(i,1);veAnhForm()}
+function layForm(){return{id:FM.id,loai:FM.loai,khTen:$('fmKhTen').value,khSdt:$('fmKhSdt').value,khDiaChi:$('fmKhDiaChi').value,sanPham:$('fmSanPham').value,nhomSP:FM.nhom,imei:$('fmImei').value,
+    loi:$('fmLoi').value,tinhTrang:$('fmTinhTrang').value,phuKien:FM.pk,henTra:$('fmHenTra').value,chiPhiDK:so($('fmChiPhi').value),ghiChu:$('fmGhiChu').value}}
+async function luuForm(){
+  const d=layForm();
+  if(!d.khTen.trim()){toast('Nhập tên khách');$('fmKhTen').focus();return}
+  if(!d.sanPham.trim()){toast('Nhập tên sản phẩm');$('fmSanPham').focus();return}
+  $('fmLuu').disabled=true;
+  try{let p=await goi('luuPhieu',TOKEN,d);const anh=FM.anh;
+    if(anh.length)p=await taiAnhLen(p,anh,'nhan');else toast(FM.id?'Đã lưu':'Đã tạo phiếu '+p.ma);
+    anh.forEach(a=>URL.revokeObjectURL(a.url));FM=null;$('pgForm').classList.add('hide');capNhatDS(p);moCT(p.id)}
+  catch(e){baoLoi(e)}finally{$('fmLuu').disabled=false}}
+function capNhatDS(p){const i=DS.findIndex(x=>x.id===p.id);if(i<0)DS.unshift(p);else DS[i]=p;veDs();luuCache()}
+
+/* ---------- QUÉT IMEI ---------- */
+let QR=null;
+function napZXing(){if(window.ZXing)return Promise.resolve();return new Promise((ok,loi)=>{const s=document.createElement('script');
+  s.src=['https:','','cdn.jsdelivr.net','npm','@zxing','library@0.21.3','umd','index.min.js'].join('/');s.onload=()=>ok();s.onerror=()=>loi(new Error('Không tải được bộ đọc mã vạch, kiểm tra mạng.'));document.head.appendChild(s)})}
+function docGia(){const Z=ZXing,h=new Map(),F=Z.BarcodeFormat;
+  h.set(Z.DecodeHintType.POSSIBLE_FORMATS,[F.CODE_128,F.CODE_39,F.CODE_93,F.EAN_13,F.EAN_8,F.UPC_A,F.ITF,F.QR_CODE,F.DATA_MATRIX]);h.set(Z.DecodeHintType.TRY_HARDER,true);
+  return new Z.BrowserMultiFormatReader(h,300)}
+async function moQuet(){$('qTT').textContent='Đang mở camera...';$('dlgQuet').showModal();
+  try{await napZXing();QR=docGia();
+    await QR.decodeFromConstraints({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}}},$('qVideo'),(r)=>{if(r)xongQuet(r.getText())});
+    $('qTT').textContent='Đưa mã vạch hoặc mã QR vào khung xanh, giữ máy yên.'}
+  catch(e){$('qTT').textContent=(window.ZXing?'Không mở được camera trực tiếp trên trình duyệt này. ':e.message+' ')+'Bấm "Chụp ảnh mã vạch để đọc" bên dưới.'}}
+function dongQuet(){try{QR&&QR.reset()}catch(e){}QR=null;if($('dlgQuet').open)$('dlgQuet').close()}
+$('dlgQuet').addEventListener('close',()=>{try{QR&&QR.reset()}catch(e){}QR=null});
+function xongQuet(t){setTimeout(xemTruoc,0);t=String(t||'').trim().replace(/^(S\/?N|SN|IMEI)\s*[:：]?\s*/i,'');if(!t)return;dongQuet();$('fmImei').value=t;toast('Đã quét: '+t,3500);if(navigator.vibrate)navigator.vibrate(80)}
+async function quetAnh(inp){const f=inp.files[0];inp.value='';if(!f)return;$('qTT').textContent='Đang đọc ảnh...';
+  try{await napZXing();const {im,u}=await docAnh(f);const t=await docMaTuAnh(im);URL.revokeObjectURL(u);
+    if(t)xongQuet(t);else $('qTT').textContent='Không đọc được mã trong ảnh. Chụp gần hơn, rõ nét, mã vạch nằm ngang và đủ sáng rồi thử lại.'}
+  catch(e){$('qTT').textContent=e.message}}
+/* thử cả ảnh, rồi từng dải ngang (tem có nhiều mã vạch), rồi xoay 90 độ */
+async function docMaTuAnh(im){const rd=docGia(),W=im.naturalWidth,H=im.naturalHeight;
+  const thu=async(sx,sy,sw,sh,xoay)=>{const k=Math.min(1,1600/Math.max(sw,sh));const c=document.createElement('canvas'),g=c.getContext('2d');
+    const w=Math.round(sw*k),h=Math.round(sh*k),m=Math.round(Math.max(w,h)*.06)+10;
+    if(xoay){c.width=h+2*m;c.height=w+2*m}else{c.width=w+2*m;c.height=h+2*m}
+    g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);
+    if(xoay){g.translate(c.width,0);g.rotate(Math.PI/2)}
+    g.drawImage(im,sx,sy,sw,sh,m,m,w,h);try{return (await rd.decodeFromImageUrl(c.toDataURL('image/jpeg',.92))).getText()}catch(e){return ''}};
+  let t=await thu(0,0,W,H,false);if(t)return t;
+  for(let i=0;i<5;i++){t=await thu(0,H*i/6,W,H/3,false);if(t)return t}
+  t=await thu(0,0,W,H,true);if(t)return t;
+  try{const c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,W,H);g.drawImage(im,0,0);
+    return (await new ZXing.BrowserQRCodeReader().decodeFromImageUrl(c.toDataURL('image/png'))).getText()}catch(e){return ''}}
+
+/* ---------- CHI TIẾT ---------- */
+function moCT(id){CT=DS.find(p=>p.id===id);if(!CT)return;veCT();$('pgCT').classList.remove('hide');$('pgCT').scrollTop=0}
+function dongCT(){$('pgCT').classList.add('hide');CT=null;veDs()}
+function veCT(){const p=CT,tra=p.trangThai==='Đã trả khách';$('ctMa').textContent=p.ma;
+  const anhTT=(p.anh||[]).filter(a=>a.gd==='tt'),anhKhac=(p.anh||[]).filter(a=>a.gd!=='tt');
+  const o1=a=>`<div class="ph" id="ph_${esc(a.id)}" onclick="phongTo('${esc(a.id)}')">Đang tải...<span class="gd">${GD[a.gd]||''} ${esc((a.chup||gio(a.luc)).slice(0,5))}</span>${coXoaAnh(a)?`<button class="x" onclick="event.stopPropagation();xoaAnhCT('${esc(a.id)}')">×</button>`:''}</div>`;
+  const kv=(k,v)=>v?`<div>${k}</div><div>${v}</div>`:'';
+  let h=`<div class="card"><div class="row"><span class="tag ${p.loai==='Bảo hành'?'t-bh':'t-sc'}">${esc(p.loai)}</span><span class="st ${lopTT(p.trangThai)}">${esc(p.trangThai)}</span></div>
+    <div style="font-size:19px;font-weight:700;margin-top:8px">${esc(p.sanPham)}</div>${p.nhomSP?`<div class="mu">${esc(p.nhomSP)}</div>`:''}${p.imei?`<div class="mu">IMEI/Serial: <b>${esc(p.imei)}</b></div>`:''}</div>`;
+  h+=`<div class="card"><h3>Khách hàng</h3><div class="kv">${kv('Tên',esc(p.khTen))}${kv('SĐT',p.khSdt?`<a href="tel:${esc(p.khSdt)}">${esc(p.khSdt)}</a>`:'')}${kv('Địa chỉ',esc(p.khDiaChi))}</div></div>`;
+  h+=`<div class="card"><h3>Tiếp nhận</h3><div class="kv">${kv('Người nhận',esc(p.nguoiNhan))}${kv('Lúc nhận','<b>'+gio(p.lucNhan)+'</b>')}${kv('Lỗi khách báo',esc(p.loi).replace(/\n/g,'<br>'))}${kv('Tình trạng',esc(p.tinhTrang).replace(/\n/g,'<br>'))}${kv('Phụ kiện',(p.phuKien||[]).map(esc).join(', ')||'Không có')}${kv('Hẹn trả',ngay(p.henTra))}${kv('Chi phí DK',p.chiPhiDK?tien(p.chiPhiDK):'')}${kv('Ghi chú',esc(p.ghiChu).replace(/\n/g,'<br>'))}</div>
+    ${anhTT.length?`<div class="mu" style="margin-top:10px">Ảnh tình trạng khi nhận (${anhTT.length})</div><div class="grid" style="margin-top:6px">${anhTT.map(o1).join('')}</div>`:''}
+    ${tra?'':`<button class="ghost sm" style="margin-top:10px" onclick="GD_CT='tt';$('fileCT').click()">📷 Thêm ảnh tình trạng</button>`}</div>`;
+  if(tra)h+=`<div class="card"><h3>Trả máy</h3><div class="kv">${kv('Người trả',esc(p.nguoiTra))}${kv('Lúc trả','<b>'+gio(p.lucTra)+'</b>')}${kv('Kết quả',esc(p.ketQua).replace(/\n/g,'<br>'))}${kv('Thực thu',p.chiPhiTT?tien(p.chiPhiTT):'0đ')}</div></div>`;
+  h+=`<div class="card"><div class="row"><h3 class="sp" style="margin:0">Ảnh khác (${anhKhac.length})</h3><button class="ghost sm" onclick="GD_CT='';$('fileCT').click()">📷 Thêm ảnh</button></div>
+    <div class="grid" style="margin-top:8px">${anhKhac.map(o1).join('')}</div>
+    ${anhKhac.length?'':'<div class="mu">Chưa có ảnh.</div>'}</div>`;
+  const acts=[];
+  if(!tra){acts.push(`<button onclick="moTT()">Cập nhật tình trạng</button>`);
+    if(coQuyen('tra'))acts.push(`<button class="ok" onclick="moTra()">Trả máy</button>`);
+    if(coQuyen('sua'))acts.push(`<button class="ghost" onclick="moForm(CT)">Sửa thông tin</button>`)}
+  else if(laQL())acts.push(`<button class="ghost" onclick="moForm(CT)">Sửa thông tin</button>`);
+  if(coQuyen('xoa'))acts.push(`<button class="bad" onclick="xoaPhieuCT()">Xoá phiếu</button>`);
+  if(acts.length)h+=`<div class="card acts">${acts.join('')}</div>`;
+  h+=`<div class="card"><h3>Lịch sử</h3><div class="tl">${(p.nhatKy||[]).slice().reverse().map(n=>`<div>${esc(n.viec)}<small>${gio(n.luc)} · ${esc(n.ai)}</small></div>`).join('')}</div></div>`;
+  h+=`<div class="card"><h3>Phiếu tiếp nhận</h3><img class="xemPhieu" id="ctXem" alt="Phiếu tiếp nhận"><div class="mu" style="margin-top:6px">Nhấn giữ ảnh để lưu hoặc gửi khách. Bấm 🖨 In ở trên để in.</div></div>`;
+  $('ctNoiDung').innerHTML=h;try{$('ctXem').src=vePhieu(p).toDataURL('image/png')}catch(e){}(p.anh||[]).forEach(a=>napAnh(p.id,a.id))}
+function coXoaAnh(a){return laQL()||(a.ai===U.ten&&CT.trangThai!=='Đã trả khách')}
+async function napAnh(pid,fid){const o=()=>$('ph_'+fid);
+  try{if(!ANH_CACHE[fid])ANH_CACHE[fid]=await goi('layAnh',TOKEN,pid,fid);const e=o();if(e){const sp=e.querySelector('.gd'),x=e.querySelector('.x');e.innerHTML=`<img src="${ANH_CACHE[fid]}" alt="">`;if(sp)e.appendChild(sp);if(x)e.appendChild(x)}}
+  catch(err){const e=o();if(e&&e.firstChild&&e.firstChild.nodeType===3)e.firstChild.textContent='Lỗi ảnh'}}
+function phongTo(fid){if(!ANH_CACHE[fid])return;$('xemAnhImg').src=ANH_CACHE[fid];$('xemAnh').showModal()}
+async function chonAnhCT(inp){const fs=[...inp.files].map(f=>({file:f,luc:new Date()}));inp.value='';if(!fs.length)return;
+  const gd=GD_CT||(CT.trangThai==='Đã trả khách'?'tra':(CT.nhatKy||[]).length>1?'sua':'nhan');GD_CT='';
+  const p=await taiAnhLen(CT,fs,gd);if(p&&p.id){capNhatDS(p);if(CT&&CT.id===p.id){CT=p;veCT()}}}
+async function xoaAnhCT(fid){if(!confirm('Xoá ảnh này?'))return;try{const p=await goi('xoaAnh',TOKEN,CT.id,fid);delete ANH_CACHE[fid];CT=p;capNhatDS(p);veCT()}catch(e){baoLoi(e)}}
+function moTT(){$('ttChon').innerHTML=HT.trangThai.filter(t=>t!=='Đã trả khách').map(t=>`<option ${t===CT.trangThai?'selected':''}>${esc(t)}</option>`).join('');$('ttGhi').value='';$('dlgTT').showModal()}
+async function guiTT(){try{const p=await goi('capNhatTrangThai',TOKEN,CT.id,$('ttChon').value,$('ttGhi').value);$('dlgTT').close();CT=p;capNhatDS(p);veCT();toast('Đã cập nhật')}catch(e){baoLoi(e)}}
+function moTra(){$('traTom').textContent=`${CT.ma} · ${CT.sanPham} · ${CT.khTen}`;$('traKQ').value=CT.trangThai==='Không sửa được'?'Không sửa được':'';
+  $('traTien').value=CT.chiPhiDK?Number(CT.chiPhiDK).toLocaleString('vi-VN'):'';$('traNguoi').textContent=U.ten;$('dlgTra').showModal()}
+async function guiTra(){try{const p=await goi('traMay',TOKEN,CT.id,{ketQua:$('traKQ').value,chiPhiTT:so($('traTien').value)});$('dlgTra').close();CT=p;capNhatDS(p);veCT();toast('Đã ghi trả máy')}catch(e){baoLoi(e)}}
+async function xoaPhieuCT(){if(!confirm(`Xoá hẳn phiếu ${CT.ma}? Ảnh của phiếu cũng bị xoá.`))return;
+  try{await goi('xoaPhieu',TOKEN,CT.id);DS=DS.filter(x=>x.id!==CT.id);dongCT();toast('Đã xoá phiếu')}catch(e){baoLoi(e)}}
+
+/* ---------- IN PHIẾU ---------- */
+function dongIn(p){const tra=p.trangThai==='Đã trả khách';const r=[
+  ['Khách hàng',p.khTen],['Số điện thoại',p.khSdt],['Địa chỉ',p.khDiaChi],['Loại sản phẩm',p.nhomSP],['Sản phẩm',p.sanPham],['IMEI / Serial',p.imei],
+  ['Lỗi khách báo',p.loi],['Tình trạng khi nhận',p.tinhTrang],['Phụ kiện kèm',(p.phuKien||[]).join(', ')||'Không có'],
+  ['Hẹn trả',p.henTra?ngay(p.henTra):''],['Chi phí dự kiến',p.chiPhiDK?tien(p.chiPhiDK):''],['Người tiếp nhận',p.nguoiNhan]];
+  if(tra)r.push(['Kết quả',p.ketQua],['Thực thu',p.chiPhiTT?tien(p.chiPhiTT):'0đ'],['Người trả máy',p.nguoiTra+' · '+gio(p.lucTra)]);
+  return r.filter(x=>x[1])}
+function tieuDeIn(p){return'PHIẾU TIẾP NHẬN '+(p.loai==='Bảo hành'?'BẢO HÀNH':'SỬA CHỮA')}
+function moIn(){$('inKho').value=localStorage.getItem('psc_kho')||'A5';$('inAnh').checked=localStorage.getItem('psc_inanh')!=='0';doiKho();$('dlgIn').showModal()}
+function doiKho(){$('inAnhO').classList.toggle('hide',$('inKho').value==='K80')}
+function inPhieu(){const p=CT,kho=$('inKho').value,kemAnh=kho!=='K80'&&$('inAnh').checked;
+  localStorage.setItem('psc_kho',kho);localStorage.setItem('psc_inanh',$('inAnh').checked?'1':'0');
+  const page={A5:'A5 portrait;margin:8mm',A4:'A4 portrait;margin:12mm',K80:'80mm auto;margin:2mm'}[kho];
+  $('cssIn').textContent='@page{size:'+page+'}';
+  const anh=kemAnh?[...(p.anh||[]).filter(a=>a.gd==='tt'),...(p.anh||[]).filter(a=>a.gd==='nhan')].filter(a=>ANH_CACHE[a.id]).slice(0,6):[];
+  $('in').className=kho==='K80'?'k80':'';
+  $('in').innerHTML=`<div class="dau"><div><b>${esc(HT.tenCuaHang)}</b><h2>${tieuDeIn(p)}</h2></div><div class="so">Số: <b>${esc(p.ma)}</b><br>${gio(p.lucNhan)}</div></div>
+  <table>${dongIn(p).map(([k,v])=>`<tr><td>${k}</td><td>${esc(v).replace(/\n/g,'<br>')}</td></tr>`).join('')}</table>
+  ${anh.length?`<div class="anhs">${anh.map(a=>`<img src="${ANH_CACHE[a.id]}">`).join('')}</div>`:''}
+  <div class="ky"><div><b>Khách hàng</b><br><i>(Ký, ghi rõ họ tên)</i></div><div><b>${p.trangThai==='Đã trả khách'?'Người trả máy':'Người tiếp nhận'}</b><br><i>(Ký, ghi rõ họ tên)</i></div></div>`;
+  $('dlgIn').close();setTimeout(()=>window.print(),150)}
+/* Ảnh phiếu: dự phòng khi trình duyệt không mở được hộp in. Nhấn giữ ảnh > Chia sẻ > In */
+function anhPhieu(){$('anhPhieuImg').src=vePhieu(CT).toDataURL('image/png');$('dlgIn').close();$('dlgAnhPhieu').showModal()}
+function vePhieu(p){const W=1000,PAD=48,LBL=290,FS=30,LH=42;
+  const c=document.createElement('canvas'),g=c.getContext('2d');const F=(w,sz)=>`${w} ${sz}px -apple-system,Arial,sans-serif`;
+  function wrap(t,max,font){g.font=font;const out=[];String(t).split('\n').forEach(par=>{let line='';par.split(' ').forEach(w=>{const th=line?line+' '+w:w;if(g.measureText(th).width>max&&line){out.push(line);line=w}else line=th});out.push(line)});return out}
+  const rows=dongIn(p).map(([k,v])=>({k:wrap(k,LBL-16,F('600',FS)),v:wrap(v,W-PAD*2-LBL,F('400',FS))}));
+  const H=PAD+44+12+52+20+56+rows.reduce((s,r)=>s+Math.max(r.k.length,r.v.length)*LH+18,0)+40+200+PAD;
+  c.width=W;c.height=H;g.fillStyle='#fff';g.fillRect(0,0,W,H);g.fillStyle='#000';g.textBaseline='top';
+  let y=PAD;g.font=F('700',34);g.fillText(HT.tenCuaHang,PAD,y);y+=44+12;g.font=F('800',44);g.fillText(tieuDeIn(p),PAD,y);y+=52+20;
+  g.font=F('400',FS);g.fillText('Số: '+p.ma+'   ·   '+gio(p.lucNhan),PAD,y);y+=56;
+  rows.forEach(r=>{g.strokeStyle='#ccc';g.beginPath();g.moveTo(PAD,y-9);g.lineTo(W-PAD,y-9);g.stroke();
+    g.fillStyle='#555';g.font=F('600',FS);r.k.forEach((l,i)=>g.fillText(l,PAD,y+i*LH));
+    g.fillStyle='#000';g.font=F('400',FS);r.v.forEach((l,i)=>g.fillText(l,PAD+LBL,y+i*LH));y+=Math.max(r.k.length,r.v.length)*LH+18});
+  y+=40;g.font=F('700',FS);g.textAlign='center';g.fillText('Khách hàng',W*0.27,y);g.fillText(p.trangThai==='Đã trả khách'?'Người trả máy':'Người tiếp nhận',W*0.73,y);
+  g.font=F('italic 400',24);g.fillStyle='#555';g.fillText('(Ký, ghi rõ họ tên)',W*0.27,y+40);g.fillText('(Ký, ghi rõ họ tên)',W*0.73,y+40);
+  return c}
+function phieuTuForm(){const d=layForm(),cu=FM&&FM.id?DS.find(x=>x.id===FM.id):null;
+  return Object.assign({},cu||{},d,{ma:cu?cu.ma:'(tự cấp khi lưu)',lucNhan:cu?cu.lucNhan:new Date(Date.now()+7*36e5).toISOString().slice(0,16),nguoiNhan:cu?cu.nguoiNhan:(U&&U.ten)||'',trangThai:cu?cu.trangThai:'Đã tiếp nhận'})}
+function xemTruoc(){clearTimeout(xemTruoc.h);xemTruoc.h=setTimeout(()=>{if(!FM||!HT)return;try{$('fmXem').src=vePhieu(phieuTuForm()).toDataURL('image/png')}catch(e){}},250)}
+
+/* ---------- TÀI KHOẢN ---------- */
+let TKS=[],TK_SUA=null;
+async function veTaiKhoan(){$('toiInfo').innerHTML=`<b>${esc(U.ten)}</b> · ${esc(U.tenDN)} · ${esc(U.tenVaiTro)}`;
+  if(!laQL())return;try{TKS=await goi('dsTaiKhoan',TOKEN);veDsTK()}catch(e){baoLoi(e)}}
+function veDsTK(){$('dsTK').innerHTML=TKS.map(t=>`<div class="tk"><div class="sp"><b>${esc(t.ten)}</b>${t.khoa?' <span class="tag st4">Đã khoá</span>':''}<div class="mu">${esc(t.tenDN)} · ${esc(t.tenVaiTro)}</div></div><button class="ghost sm" data-u="${esc(t.tenDN)}" onclick="moTK(this.dataset.u)">Sửa</button></div>`).join('')}
+function moTK(u){TK_SUA=u?TKS.find(t=>t.tenDN===u):null;const t=TK_SUA;
+  $('tkTieuDe').textContent=t?'Sửa tài khoản':'Thêm tài khoản';$('tkTen').value=t?t.ten:'';$('tkUser').value=t?t.tenDN:'';$('tkUser').disabled=!!t;
+  {const v=(t?t.vaiTro:'tiepnhan').split(',');$('tkVaiTro').querySelectorAll('input').forEach(c=>c.checked=v.indexOf(c.value)>=0)}$('tkMK').value='';$('tkMKNhan').textContent=t?'Mật khẩu mới (bỏ trống = giữ nguyên)':'Mật khẩu (tối thiểu 6 ký tự)';
+  $('tkKhoaO').classList.toggle('hide',!t);$('tkKhoa').checked=!!(t&&t.khoa);$('dlgTK').showModal()}
+async function guiTK(){try{TKS=await goi('luuTaiKhoan',TOKEN,{tenDN:$('tkUser').value,ten:$('tkTen').value,vaiTro:[...$('tkVaiTro').querySelectorAll('input:checked')].map(c=>c.value),matKhau:$('tkMK').value,khoa:$('tkKhoa').checked});
+  $('dlgTK').close();veDsTK();toast('Đã lưu tài khoản')}catch(e){baoLoi(e)}}
+function moDoiMK(){$('mkCu').value='';$('mkMoi').value='';$('dlgMK').showModal()}
+async function guiMK(){try{await goi('doiMatKhau',TOKEN,$('mkCu').value,$('mkMoi').value);$('dlgMK').close();toast('Đã đổi mật khẩu')}catch(e){baoLoi(e)}}
+
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&TOKEN&&U&&!$('scApp').classList.contains('hide'))taiLaiDs()});
+khoiDong();
+</script>
+<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js')</script>
+</body>
+</html>
