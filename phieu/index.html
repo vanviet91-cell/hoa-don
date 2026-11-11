@@ -351,7 +351,7 @@ const CUA_HANG={ten:'SIÊU THỊ ĐIỆN MÁY - CTY TNHH TM&DV CƯỜNG TƯ',dia
 const LOGO_IM=new Image();LOGO_IM.onload=()=>{if(FM)xemTruoc();else if(CT&&$('ctXem'))try{$('ctXem').src=vePhieu(CT).toDataURL('image/png')}catch(e){}};LOGO_IM.src=CUA_HANG.logo;
 const GD={nhan:'Lúc nhận',tt:'Tình trạng',sua:'Khi sửa',tra:'Lúc trả'};
 let VIEC=[],NV=[],VLOC='nay',VCT=null,VFM=null;
-let GD_CT='';let TOKEN=localStorage.getItem('psc_token')||'',U=null,HT=null,DS=[],LOC='dang',CT=null,FM=null,ANH_CACHE={};
+let GD_CT='';let TOKEN=localStorage.getItem('psc_token')||'',U=null,HT=null,DS=[],TONG=0,CU=[],CU_Q='',CU_TT='',CU_HEN=0,LOC='dang',CT=null,FM=null,ANH_CACHE={};
 
 /* gọi máy chủ: trả Promise */
 const API=['https:','','script.google.com','macros','s','AKfycbyZRX-rooZXkOnrrRhi1nT6QX584v5Wqc0-Ux1WGp9NXPKBKJ3tSEJpjdGdfVog9Db4','exec'].join('/');
@@ -374,14 +374,14 @@ async function khoiDong(){
   /* hiện ngay danh sách đã lưu trên máy từ lần trước, rồi cập nhật từ máy chủ */
   let nhanh=false;
   if(TOKEN){try{const c=JSON.parse(localStorage.getItem('psc_cache')||'null');
-    if(c&&c.user&&Array.isArray(c.phieu)){HT=c.ht;U=c.user;DS=c.phieu;VIEC=c.viec||[];NV=c.nv||[];$('manTai').style.display='none';vaoApp();nhanh=true}}catch(e){}}
+    if(c&&c.user&&Array.isArray(c.phieu)){HT=c.ht;U=c.user;DS=c.phieu;TONG=c.tong||DS.length;VIEC=c.viec||[];NV=c.nv||[];$('manTai').style.display='none';vaoApp();nhanh=true}}catch(e){}}
   let r;try{r=await goi('moApp',TOKEN||'')}catch(e){if(nhanh){toast('Chưa cập nhật được: '+e.message);return}
     $('manTai').querySelector('span').textContent='Không tải được: '+e.message;return}
   HT=r.ht;$('manTai').style.display='none';
-  if(r.user){U=r.user;DS=r.phieu;VIEC=r.viec||[];NV=r.nv||[];luuCache();if(nhanh){veDs();veViec();if(CT){CT=DS.find(p=>p.id===CT.id)||CT}}else vaoApp();return}
+  if(r.user){U=r.user;DS=r.phieu;TONG=r.tongPhieu||DS.length;VIEC=r.viec||[];NV=r.nv||[];luuCache();if(nhanh){veDs();veViec();if(CT){CT=DS.find(p=>p.id===CT.id)||CT}}else vaoApp();return}
   if(r.hetPhien){TOKEN='';localStorage.removeItem('psc_token');localStorage.removeItem('psc_cache');if(nhanh){$('scApp').classList.add('hide');toast('Phiên đăng nhập đã hết, đăng nhập lại.')}}
   hienLogin()}
-function luuCache(){try{localStorage.setItem('psc_cache',JSON.stringify({ht:HT,user:U,phieu:DS,viec:VIEC,nv:NV}))}catch(e){}}
+function luuCache(){try{localStorage.setItem('psc_cache',JSON.stringify({ht:HT,user:U,phieu:DS,tong:TONG,viec:VIEC,nv:NV}))}catch(e){}}
 function hienLogin(){$('scApp').classList.add('hide');$('scLogin').classList.remove('hide');
   const dau=HT&&!HT.coTaiKhoan;$('lgCuaHang').textContent=HT?HT.tenCuaHang:'';
   $('lgTieuDe').textContent=dau?'Tạo tài khoản Quản lý':'Đăng nhập';$('lgBtn').textContent=dau?'Tạo tài khoản':'Đăng nhập';
@@ -392,7 +392,7 @@ async function guiDangNhap(){const u=$('lgUser').value.trim(),p=$('lgPass').valu
   $('lgBtn').disabled=true;
   try{const r=HT.coTaiKhoan?await goi('dangNhap',u,p):await goi('taoQuanLyDauTien',$('lgTen').value.trim(),u,p);
     HT.coTaiKhoan=true;TOKEN=r.token;localStorage.setItem('psc_token',TOKEN);localStorage.setItem('psc_user',u);U=r.user;$('lgPass').value='';
-    const d=await goi('moApp',TOKEN);DS=d.phieu;VIEC=d.viec||[];NV=d.nv||[];luuCache();vaoApp()}catch(e){baoLoi(e)}finally{$('lgBtn').disabled=false}}
+    const d=await goi('moApp',TOKEN);DS=d.phieu;TONG=d.tongPhieu||DS.length;VIEC=d.viec||[];NV=d.nv||[];luuCache();vaoApp()}catch(e){baoLoi(e)}finally{$('lgBtn').disabled=false}}
 function vaoApp(){$('scLogin').classList.add('hide');$('scApp').classList.remove('hide');
   $('who').innerHTML=`<b>${esc(U.ten)}</b><br>${esc(U.tenVaiTro)}`;
   $('fab').classList.toggle('hide',!coQuyen('tao'));$('qlTK').classList.toggle('hide',!laQL());moTab(chiLamViec()?'viec':'phieu');
@@ -419,7 +419,7 @@ function moTab(t){['phieu','viec','taikhoan'].forEach(x=>$('tab-'+x).classList.t
   $('tieuDe').textContent=t==='phieu'?'Phiếu sửa chữa':t==='viec'?(laQL()?'Giao việc':'Việc của tôi'):'Tài khoản';
   $('fab').classList.toggle('hide',t!=='phieu'||!coQuyen('tao'));$('fabV').classList.toggle('hide',t!=='viec'||!laQL());
   if(t==='phieu')veDs();else if(t==='viec'){veViec();taiLaiViec()}else veTaiKhoan()}
-async function taiLaiDs(){try{const r=await goi('dsPhieu',TOKEN);DS=r.phieu;U=r.user;veDs()}catch(e){baoLoi(e)}}
+async function taiLaiDs(){try{const r=await goi('dsPhieu',TOKEN);DS=r.phieu;TONG=r.tongPhieu||DS.length;U=r.user;CU_Q='';veDs()}catch(e){baoLoi(e)}}
 
 /* ---------- GIAO VIỆC ---------- */
 const V_KET=['Hoàn thành','Không làm được','Đã huỷ'];
@@ -526,7 +526,7 @@ async function napAnhV(vid,fid,ky){const o=()=>$('pv_'+fid);
     if(ky){e.innerHTML=`<img src="${ANH_CACHE[fid]}" alt="Chữ ký" style="width:100%;display:block">`;return}
     const sp=e.querySelector('.gd'),x=e.querySelector('.x');e.innerHTML=`<img src="${ANH_CACHE[fid]}" alt="">`;if(sp)e.appendChild(sp);if(x)e.appendChild(x)}
   catch(err){const e=o();if(e&&e.firstChild&&e.firstChild.nodeType===3)e.firstChild.textContent='Lỗi ảnh'}}
-function moPhieuTuViec(){const p=DS.find(x=>x.id===VCT.phieuId);if(!p){toast('Không tìm thấy phiếu');return}moCT(p.id)}
+async function moPhieuTuViec(){let p=timTrongMay(VCT.phieuId);if(!p){try{p=await goi('layPhieu',TOKEN,VCT.phieuId);CU=CU.filter(x=>x.id!==p.id);CU.push(p)}catch(e){baoLoi(e);return}}moCT(p.id)}
 async function buocV(b){try{const v=await goi('buocViec',TOKEN,VCT.id,b);VCT=v;capNhatV(v);veVCT();toast({nhan:'Đã nhận việc',di:'Đã ghi giờ đi',den:'Đã ghi giờ đến'}[b])}catch(e){baoLoi(e)}}
 async function chonAnhV(inp){const fs=[...inp.files].map(f=>({file:f,luc:new Date()}));inp.value='';if(!fs.length||!VCT)return;let v=VCT,n=0;
   for(const a of fs){n++;toast(`Đang tải ảnh ${n}/${fs.length}...`,60000);
@@ -577,17 +577,32 @@ const NHOM_LOC=[['dang','Đang xử lý'],['xong','Chờ trả'],['tra','Đã tr
 function nhomTT(t){if(t==='Đã trả khách')return'tra';if(t==='Đã sửa xong'||t==='Không sửa được')return'xong';return'dang'}
 function lopTT(t){return{'Đã tiếp nhận':'st0','Đang kiểm tra':'st1','Đang sửa':'st1','Gửi hãng':'st1','Chờ linh kiện':'st1','Đã sửa xong':'st2','Không sửa được':'st4','Đã trả khách':'st3'}[t]||'st0'}
 function boDau(s){return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/đ/g,'d').replace(/Đ/g,'D').toLowerCase()}
-function veDs(){
-  const dem={dang:0,xong:0,tra:0,tat:DS.length};DS.forEach(p=>dem[nhomTT(p.trangThai)]++);
-  $('locTT').innerHTML=NHOM_LOC.map(([k,t])=>`<button class="chip ${LOC===k?'on':''}" onclick="LOC='${k}';veDs()">${t} (${dem[k]})</button>`).join('');
-  const q=boDau($('timKiem').value.trim());
-  const ds=DS.filter(p=>(LOC==='tat'||nhomTT(p.trangThai)===LOC)&&(!q||boDau([p.ma,p.khTen,p.khSdt,p.imei,p.sanPham,p.nhomSP].join(' ')).includes(q)));
-  $('ds').innerHTML=ds.length?ds.map(p=>`<div class="pc" onclick="moCT('${esc(p.id)}')">
+function timTrongMay(id){return DS.find(p=>p.id===id)||CU.find(p=>p.id===id)}
+function thePhieu(p){return`<div class="pc" onclick="moCT('${esc(p.id)}')">
     <div class="l1"><span class="ma">${esc(p.ma)}</span><span class="tag ${p.loai==='Bảo hành'?'t-bh':'t-sc'}">${esc(p.loai)}</span><span class="st ${lopTT(p.trangThai)}">${esc(p.trangThai)}</span></div>
     <div class="l2">${esc(p.sanPham)}${p.nhomSP?` <span class="mu" style="font-weight:400">· ${esc(p.nhomSP)}</span>`:''}</div>
     <div class="l3">${esc(p.khTen)}${p.khSdt?' · '+esc(p.khSdt):''}${p.imei?' · IMEI '+esc(p.imei):''}</div>
-    <div class="l3">Nhận ${gio(p.lucNhan)} · ${esc(p.nguoiNhan)}${p.henTra&&p.trangThai!=='Đã trả khách'?' · hẹn '+ngay(p.henTra):''}${p.anh&&p.anh.length?' · 📷 '+p.anh.length:''}</div></div>`).join('')
-    :`<div class="empty">${DS.length?'Không có phiếu khớp.':'Chưa có phiếu nào. Bấm "+ Tiếp nhận máy" để tạo phiếu đầu tiên.'}</div>`}
+    <div class="l3">Nhận ${gio(p.lucNhan)} · ${esc(p.nguoiNhan)}${p.henTra&&p.trangThai!=='Đã trả khách'?' · hẹn '+ngay(p.henTra):''}${p.anh&&p.anh.length?' · 📷 '+p.anh.length:''}</div></div>`}
+function khopQ(p,q){return boDau([p.ma,p.khTen,p.khSdt,p.imei,p.sanPham,p.nhomSP].join(' ')).includes(q)}
+/* phiếu cũ không nằm trong máy: tìm trên máy chủ, chờ ngừng gõ 0,6 giây */
+function henTimCu(q){clearTimeout(CU_HEN);if(q.length<2||q===CU_Q)return;
+  CU_HEN=setTimeout(async()=>{CU_TT='dang';veDs();try{const r=await goi('timPhieuCu',TOKEN,q);if(boDau($('timKiem').value.trim())!==q)return;
+    CU=r.phieu||[];CU_Q=q;CU_TT=r.du?'':'nhieu'}catch(e){CU_TT='loi'}veDs()},600)}
+function veDs(){
+  const dem={dang:0,xong:0,tra:0,tat:Math.max(TONG,DS.length)};DS.forEach(p=>dem[nhomTT(p.trangThai)]++);
+  $('locTT').innerHTML=NHOM_LOC.map(([k,t])=>`<button class="chip ${LOC===k?'on':''}" onclick="LOC='${k}';veDs()">${t} (${dem[k]})</button>`).join('');
+  const q=boDau($('timKiem').value.trim());
+  const ds=DS.filter(p=>(LOC==='tat'||nhomTT(p.trangThai)===LOC)&&(!q||khopQ(p,q)));
+  let h=ds.length?ds.map(thePhieu).join(''):(q&&q.length>=2?'':`<div class="empty">${DS.length?'Không có phiếu khớp.':'Chưa có phiếu nào. Bấm "+ Tiếp nhận máy" để tạo phiếu đầu tiên.'}</div>`);
+  if(q.length>=2){henTimCu(q);
+    const cu=q===CU_Q?CU.filter(p=>!DS.some(x=>x.id===p.id)):[];
+    if(cu.length)h+=`<div class="mu" style="margin:14px 4px 6px;font-weight:600">Phiếu cũ hơn 90 ngày (${cu.length}${CU_TT==='nhieu'?'+':''})</div>`+cu.map(thePhieu).join('');
+    if(CU_TT==='dang'||q!==CU_Q)h+=`<div class="mu" style="text-align:center;padding:10px">Đang tìm cả phiếu cũ...</div>`;
+    else if(CU_TT==='loi')h+=`<div class="mu" style="text-align:center;padding:10px">Chưa tìm được phiếu cũ (mất mạng?). Gõ lại để thử.</div>`;
+    else if(CU_TT==='nhieu')h+=`<div class="mu" style="text-align:center;padding:10px">Nhiều phiếu khớp, đang hiện 50 phiếu mới nhất. Gõ cụ thể hơn để thu hẹp.</div>`;
+    else if(!ds.length&&!cu.length)h+=`<div class="empty">Không có phiếu khớp, kể cả phiếu cũ.</div>`}
+  else if(TONG>DS.length)h+=`<div class="mu" style="text-align:center;padding:12px;line-height:1.5">Máy đang hiện ${DS.length} phiếu gần đây (chưa trả máy và 90 ngày qua).<br>Gõ tên, SĐT hoặc IMEI để tìm ${TONG-DS.length} phiếu cũ hơn.</div>`;
+  $('ds').innerHTML=h}
 
 /* ---------- ẢNH: thu nhỏ + đóng dấu ---------- */
 function docAnh(file){return new Promise((ok,loi)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>ok({im,u});im.onerror=()=>{URL.revokeObjectURL(u);loi(new Error('Không đọc được ảnh'))};im.src=u})}
@@ -639,7 +654,7 @@ async function luuForm(){
     if(anh.length)p=await taiAnhLen(p,anh,'nhan');else toast(FM.id?'Đã lưu':'Đã tạo phiếu '+p.ma);
     anh.forEach(a=>URL.revokeObjectURL(a.url));FM=null;$('pgForm').classList.add('hide');capNhatDS(p);moCT(p.id)}
   catch(e){baoLoi(e)}finally{$('fmLuu').disabled=false}}
-function capNhatDS(p){const i=DS.findIndex(x=>x.id===p.id);if(i<0)DS.unshift(p);else DS[i]=p;veDs();luuCache()}
+function capNhatDS(p){const i=DS.findIndex(x=>x.id===p.id),j=CU.findIndex(x=>x.id===p.id);if(j>=0)CU.splice(j,1);if(i<0){DS.unshift(p);if(j<0)TONG++}else DS[i]=p;veDs();luuCache()}
 
 /* ---------- QUÉT IMEI ---------- */
 let QR=null;
@@ -675,7 +690,7 @@ async function docMaTuAnh(im){const rd=docGia(),W=im.naturalWidth,H=im.naturalHe
     return (await new ZXing.BrowserQRCodeReader().decodeFromImageUrl(c.toDataURL('image/png'))).getText()}catch(e){return ''}}
 
 /* ---------- CHI TIẾT ---------- */
-function moCT(id){CT=DS.find(p=>p.id===id);if(!CT)return;veCT();$('pgCT').classList.remove('hide');$('pgCT').scrollTop=0}
+function moCT(id){CT=timTrongMay(id);if(!CT)return;veCT();$('pgCT').classList.remove('hide');$('pgCT').scrollTop=0}
 function dongCT(){$('pgCT').classList.add('hide');CT=null;veDs()}
 function veCT(){const p=CT,tra=p.trangThai==='Đã trả khách';$('ctMa').textContent=p.ma;
   const anhTT=(p.anh||[]).filter(a=>a.gd==='tt'),anhKhac=(p.anh||[]).filter(a=>a.gd!=='tt');
@@ -717,7 +732,7 @@ function moTra(){$('traTom').textContent=`${CT.ma} · ${CT.sanPham} · ${CT.khTe
   $('traTien').value=CT.chiPhiDK?Number(CT.chiPhiDK).toLocaleString('vi-VN'):'';$('traNguoi').textContent=U.ten;$('dlgTra').showModal()}
 async function guiTra(){try{const p=await goi('traMay',TOKEN,CT.id,{ketQua:$('traKQ').value,chiPhiTT:so($('traTien').value)});$('dlgTra').close();CT=p;capNhatDS(p);veCT();toast('Đã ghi trả máy')}catch(e){baoLoi(e)}}
 async function xoaPhieuCT(){if(!confirm(`Xoá hẳn phiếu ${CT.ma}? Ảnh của phiếu cũng bị xoá.`))return;
-  try{await goi('xoaPhieu',TOKEN,CT.id);DS=DS.filter(x=>x.id!==CT.id);dongCT();toast('Đã xoá phiếu')}catch(e){baoLoi(e)}}
+  try{await goi('xoaPhieu',TOKEN,CT.id);DS=DS.filter(x=>x.id!==CT.id);CU=CU.filter(x=>x.id!==CT.id);TONG=Math.max(0,TONG-1);luuCache();dongCT();toast('Đã xoá phiếu')}catch(e){baoLoi(e)}}
 
 /* ---------- IN PHIẾU ---------- */
 function dongIn(p){const tra=p.trangThai==='Đã trả khách';const r=[
@@ -762,7 +777,7 @@ function vePhieu(p){const W=1000,PAD=48,LBL=290,FS=30,LH=42;
   y+=40;g.font=F('700',FS);g.textAlign='center';g.fillText('Khách hàng',W*0.27,y);g.fillText(p.trangThai==='Đã trả khách'?'Người trả máy':'Người tiếp nhận',W*0.73,y);
   g.font=F('italic 400',24);g.fillStyle='#555';g.fillText('(Ký, ghi rõ họ tên)',W*0.27,y+40);g.fillText('(Ký, ghi rõ họ tên)',W*0.73,y+40);
   return c}
-function phieuTuForm(){const d=layForm(),cu=FM&&FM.id?DS.find(x=>x.id===FM.id):null;
+function phieuTuForm(){const d=layForm(),cu=FM&&FM.id?timTrongMay(FM.id):null;
   return Object.assign({},cu||{},d,{ma:cu?cu.ma:'(tự cấp khi lưu)',lucNhan:cu?cu.lucNhan:new Date(Date.now()+7*36e5).toISOString().slice(0,16),nguoiNhan:cu?cu.nguoiNhan:(U&&U.ten)||'',trangThai:cu?cu.trangThai:'Đã tiếp nhận'})}
 function xemTruoc(){clearTimeout(xemTruoc.h);xemTruoc.h=setTimeout(()=>{if(!FM||!HT)return;try{$('fmXem').src=vePhieu(phieuTuForm()).toDataURL('image/png')}catch(e){}},250)}
 
