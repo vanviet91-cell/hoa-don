@@ -517,6 +517,7 @@ function veVCT(){const v=VCT,xong=vXong(v),ql=laQL(),cuaToi=v.nguoiLam===U.tenDN
   if(xong&&v.trangThai!=='Đã huỷ')h+=`<div class="card"><h3>Kết quả</h3><div class="kv">${kv('Kết quả',esc(v.ketQua).replace(/\n/g,'<br>'))}${kv('Đã thu',v.daThu?'<b>'+tien(v.daThu)+'</b>':(v.thuHo?'<span class="tre">Chưa thu</span>':''))}${kv('Phương tiện',esc(v.xe))}${kv('Số km',v.km?esc(v.km)+' km':'')}</div>
     ${v.kyTen?`<div class="mu" style="margin-top:8px">Chữ ký khách</div><div id="pv_${esc(v.kyTen)}" style="background:#fff;border-radius:8px;min-height:60px;margin-top:4px" class="mu">Đang tải...</div>`:''}</div>`;
   h+=`<div class="card"><h3>Thời gian</h3><div class="kv">${kv('Giao việc',gio(v.lucTao)+' · '+esc(v.nguoiTao))}${kv('Người làm','<b>'+esc(v.tenNguoiLam)+'</b>')}${kv('Nhận việc',v.lucNhanViec?gio(v.lucNhanViec):'')}${kv('Bắt đầu đi',v.lucDi?gio(v.lucDi):'')}${kv('Đến nơi',v.lucDen?gio(v.lucDen)+(dungGio(v)===false?' <span class="tre">(trễ)</span>':dungGio(v)?' (đúng giờ)':''):'')}${kv('Kết thúc',v.lucXong?gio(v.lucXong):'')}${kv('Phiếu',v.phieuMa?`<a href="#" onclick="event.preventDefault();moPhieuTuViec()">${esc(v.phieuMa)}</a>`:'')}</div></div>`;
+  if(ql&&v.trangThai==='Đã huỷ')h+=`<div class="card">${v.ketQua?`<div class="mu" style="margin-bottom:8px">Lý do huỷ: ${esc(v.ketQua)}</div>`:''}<button class="btnTo" onclick="keoLaiV()">↩ Kéo lại đơn</button></div>`;
   if(ql&&!xong)h+=`<div class="card acts"><button class="ghost" onclick="moVForm(VCT)">Sửa / giao người khác</button><button class="bad" onclick="huyV()">Huỷ việc</button></div>`;
   h+=`<div class="card"><h3>Lịch sử</h3><div class="tl">${(v.nhatKy||[]).slice().reverse().map(n=>`<div>${esc(n.viec)}<small>${gio(n.luc)} · ${esc(n.ai)}</small></div>`).join('')}</div></div>`;
   $('vcNoiDung').innerHTML=h;(v.anh||[]).forEach(a=>napAnhV(v.id,a.id));if(v.kyTen)napAnhV(v.id,v.kyTen,true)}
@@ -533,6 +534,8 @@ async function chonAnhV(inp){const fs=[...inp.files].map(f=>({file:f,luc:new Dat
       v=await goi('taiAnhViec',TOKEN,v.id,url,nhanGio(a.luc))}catch(e){toast('Ảnh '+n+' lỗi: '+e.message,5000);await new Promise(r=>setTimeout(r,1500))}}
   toast('Đã tải xong ảnh');capNhatV(v);if(VCT&&VCT.id===v.id){VCT=v;veVCT()}}
 async function xoaAnhV(fid){if(!confirm('Xoá ảnh này?'))return;try{const v=await goi('xoaAnhViec',TOKEN,VCT.id,fid);delete ANH_CACHE[fid];VCT=v;capNhatV(v);veVCT()}catch(e){baoLoi(e)}}
+async function keoLaiV(){if(!confirm('Kéo lại việc '+VCT.ma+' giao cho '+VCT.tenNguoiLam+'?'))return;
+  try{const v=await goi('keoLaiViec',TOKEN,VCT.id);VCT=v;capNhatV(v);veVCT();toast(treViec(v)?'Đã kéo lại. Giờ hẹn đã qua, bấm Sửa để hẹn lại':'Đã kéo lại đơn, chờ '+v.tenNguoiLam+' nhận',4000)}catch(e){baoLoi(e)}}
 async function huyV(){const l=prompt('Lý do huỷ việc '+VCT.ma+'?');if(l===null)return;try{const v=await goi('huyViec',TOKEN,VCT.id,l);VCT=v;capNhatV(v);veVCT();toast('Đã huỷ việc')}catch(e){baoLoi(e)}}
 
 /* báo hoàn thành + chữ ký */
