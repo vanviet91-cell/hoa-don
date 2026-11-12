@@ -146,6 +146,7 @@ img.xemPhieu{display:block;width:100%;border:1px solid var(--bd);border-radius:8
       <div id="ds"></div>
     </div>
     <div id="tab-viec" class="hide">
+      <div class="card hide" id="tbViec"></div>
       <div class="card hide" id="vBang"></div>
       <div class="card" style="padding:10px">
         <div class="seg" id="vLoc"></div>
@@ -156,6 +157,7 @@ img.xemPhieu{display:block;width:100%;border:1px solid var(--bd);border-radius:8
     <div id="tab-taikhoan" class="hide">
       <div class="card"><h3>Tài khoản của tôi</h3><div id="toiInfo"></div>
         <div class="row" style="margin-top:10px"><button class="ghost sm" onclick="moDoiMK()">Đổi mật khẩu</button><span class="sp"></span><button class="ghost sm" onclick="dangXuatApp()">Đăng xuất</button></div></div>
+      <div class="card" id="tbTK"></div>
       <div class="card" id="qlTK"><div class="row"><h3 class="sp" style="margin:0">Tài khoản nhân viên</h3><button class="sm" onclick="moTK()">+ Thêm</button></div><div id="dsTK" style="margin-top:8px"></div>
         <div class="mu" style="margin-top:8px">Admin: toàn quyền, kể cả quản lý tài khoản. Quản lý: sắp xếp mọi việc, giao việc, xoá phiếu, trừ quản lý tài khoản. Tiếp nhận: tạo phiếu, cập nhật, trả máy. Kỹ thuật: xem, cập nhật tình trạng sửa, thêm ảnh, nhận việc được giao. Giao vận: nhận việc giao hàng, lắp đặt được giao.</div></div>
     </div>
@@ -252,6 +254,11 @@ img.xemPhieu{display:block;width:100%;border:1px solid var(--bd);border-radius:8
   <div class="f" id="xgThuO"><span>Đã thu của khách (đ)</span><input id="xgThu" inputmode="numeric" oninput="dinhDang(this)"></div>
   <div class="row"><div class="f sp"><span>Phương tiện</span><select id="xgXe"><option>Xe cửa hàng</option><option>Xe cá nhân</option></select></div><div class="f" style="width:38%"><span>Số km (cả đi về)</span><input id="xgKm" inputmode="decimal"></div></div>
   <div class="row" style="margin-top:8px"><button class="ghost sp" type="button" onclick="$('dlgXong').close()">Huỷ</button><button class="ok sp" type="button" id="xgGui" onclick="guiXong()">Xác nhận</button></div>
+</form></dialog>
+<dialog id="dlgNhac"><form method="dialog" onsubmit="return false">
+  <h3 style="margin-top:0" id="nhTieuDe">⏰ Tới giờ làm việc</h3>
+  <div id="nhND"></div>
+  <button class="ghost" type="button" style="width:100%;margin-top:10px" onclick="$('dlgNhac').close()">Để sau</button>
 </form></dialog>
 <dialog id="dlgTKV"><form method="dialog" onsubmit="return false">
   <div class="row"><h3 class="sp" style="margin:0">Thống kê việc</h3><input id="tkvThang" type="month" style="width:auto" onchange="veThongKe()"></div>
@@ -352,7 +359,7 @@ const CUA_HANG={ten:'SIÊU THỊ ĐIỆN MÁY - CTY TNHH TM&DV CƯỜNG TƯ',dia
 const LOGO_IM=new Image();LOGO_IM.onload=()=>{if(FM)xemTruoc();else if(CT&&$('ctXem'))try{$('ctXem').src=vePhieu(CT).toDataURL('image/png')}catch(e){}};LOGO_IM.src=CUA_HANG.logo;
 const GD={nhan:'Lúc nhận',tt:'Tình trạng',sua:'Khi sửa',tra:'Lúc trả'};
 let VIEC=[],NV=[],VLOC='nay',VCT=null,VFM=null;
-let GD_CT='';let TOKEN=localStorage.getItem('psc_token')||'',U=null,HT=null,DS=[],TONG=0,CU=[],CU_Q='',CU_TT='',CU_HEN=0,LOC='dang',CT=null,FM=null,ANH_CACHE={};
+let GD_CT='',VAPID='',DA_NHAC=new Set();let TOKEN=localStorage.getItem('psc_token')||'',U=null,HT=null,DS=[],TONG=0,CU=[],CU_Q='',CU_TT='',CU_HEN=0,LOC='dang',CT=null,FM=null,ANH_CACHE={};
 
 /* gọi máy chủ: trả Promise */
 const API=['https:','','script.google.com','macros','s','AKfycbyZRX-rooZXkOnrrRhi1nT6QX584v5Wqc0-Ux1WGp9NXPKBKJ3tSEJpjdGdfVog9Db4','exec'].join('/');
@@ -367,7 +374,7 @@ async function goiAPI(fn,args){let j;
   if(j.ok)return j.r;const m=String(j.e||'Lỗi');if(m.indexOf('PHIEN_HET')>=0){hetPhien();return new Promise(()=>{})}
   throw new Error(m.replace(/^Error:\s*/,''))}
 function baoLoi(e){toast(e.message||String(e),4000)}
-function hetPhien(){['pgVForm','pgVCT'].forEach(i=>$(i).classList.add('hide'));TOKEN='';localStorage.removeItem('psc_token');localStorage.removeItem('psc_cache');document.querySelectorAll('dialog[open]').forEach(d=>d.close());['pgForm','pgCT'].forEach(i=>$(i).classList.add('hide'));hienLogin();toast('Phiên đăng nhập đã hết, mời đăng nhập lại')}
+function hetPhien(){setTimeout(luuTkSW,0);['pgVForm','pgVCT'].forEach(i=>$(i).classList.add('hide'));TOKEN='';localStorage.removeItem('psc_token');localStorage.removeItem('psc_cache');document.querySelectorAll('dialog[open]').forEach(d=>d.close());['pgForm','pgCT'].forEach(i=>$(i).classList.add('hide'));hienLogin();toast('Phiên đăng nhập đã hết, mời đăng nhập lại')}
 
 /* ---------- KHỞI ĐỘNG / ĐĂNG NHẬP ---------- */
 async function khoiDong(){
@@ -375,14 +382,14 @@ async function khoiDong(){
   /* hiện ngay danh sách đã lưu trên máy từ lần trước, rồi cập nhật từ máy chủ */
   let nhanh=false;
   if(TOKEN){try{const c=JSON.parse(localStorage.getItem('psc_cache')||'null');
-    if(c&&c.user&&Array.isArray(c.phieu)){HT=c.ht;U=c.user;DS=c.phieu;TONG=c.tong||DS.length;VIEC=c.viec||[];NV=c.nv||[];$('manTai').style.display='none';vaoApp();nhanh=true}}catch(e){}}
+    if(c&&c.user&&Array.isArray(c.phieu)){HT=c.ht;U=c.user;DS=c.phieu;TONG=c.tong||DS.length;VAPID=c.vapid||'';VIEC=c.viec||[];NV=c.nv||[];$('manTai').style.display='none';vaoApp();nhanh=true}}catch(e){}}
   let r;try{r=await goi('moApp',TOKEN||'')}catch(e){if(nhanh){toast('Chưa cập nhật được: '+e.message);return}
     $('manTai').querySelector('span').textContent='Không tải được: '+e.message;return}
   HT=r.ht;$('manTai').style.display='none';
-  if(r.user){U=r.user;DS=r.phieu;TONG=r.tongPhieu||DS.length;VIEC=r.viec||[];NV=r.nv||[];luuCache();if(nhanh){veDs();veViec();if(CT){CT=DS.find(p=>p.id===CT.id)||CT}}else vaoApp();return}
+  if(r.user){U=r.user;DS=r.phieu;VAPID=r.vapid||VAPID;TONG=r.tongPhieu||DS.length;VIEC=r.viec||[];NV=r.nv||[];luuCache();if(nhanh){veDs();veViec();if(CT){CT=DS.find(p=>p.id===CT.id)||CT}}else vaoApp();return}
   if(r.hetPhien){TOKEN='';localStorage.removeItem('psc_token');localStorage.removeItem('psc_cache');if(nhanh){$('scApp').classList.add('hide');toast('Phiên đăng nhập đã hết, đăng nhập lại.')}}
   hienLogin()}
-function luuCache(){try{localStorage.setItem('psc_cache',JSON.stringify({ht:HT,user:U,phieu:DS,tong:TONG,viec:VIEC,nv:NV}))}catch(e){}}
+function luuCache(){try{localStorage.setItem('psc_cache',JSON.stringify({ht:HT,user:U,phieu:DS,tong:TONG,viec:VIEC,nv:NV,vapid:VAPID}))}catch(e){}luuTkSW()}
 function hienLogin(){$('scApp').classList.add('hide');$('scLogin').classList.remove('hide');
   const dau=HT&&!HT.coTaiKhoan;$('lgCuaHang').textContent=HT?HT.tenCuaHang:'';
   $('lgTieuDe').textContent=dau?'Tạo tài khoản Admin':'Đăng nhập';$('lgBtn').textContent=dau?'Tạo tài khoản':'Đăng nhập';
@@ -393,13 +400,13 @@ async function guiDangNhap(){const u=$('lgUser').value.trim(),p=$('lgPass').valu
   $('lgBtn').disabled=true;
   try{const r=HT.coTaiKhoan?await goi('dangNhap',u,p):await goi('taoQuanLyDauTien',$('lgTen').value.trim(),u,p);
     HT.coTaiKhoan=true;TOKEN=r.token;localStorage.setItem('psc_token',TOKEN);localStorage.setItem('psc_user',u);U=r.user;$('lgPass').value='';
-    const d=await goi('moApp',TOKEN);DS=d.phieu;TONG=d.tongPhieu||DS.length;VIEC=d.viec||[];NV=d.nv||[];luuCache();vaoApp()}catch(e){baoLoi(e)}finally{$('lgBtn').disabled=false}}
+    const d=await goi('moApp',TOKEN);DS=d.phieu;VAPID=d.vapid||'';TONG=d.tongPhieu||DS.length;VIEC=d.viec||[];NV=d.nv||[];luuCache();vaoApp()}catch(e){baoLoi(e)}finally{$('lgBtn').disabled=false}}
 function vaoApp(){$('scLogin').classList.add('hide');$('scApp').classList.remove('hide');
   $('who').innerHTML=`<b>${esc(U.ten)}</b><br>${esc(U.tenVaiTro)}`;
   $('fab').classList.toggle('hide',!coQuyen('tao'));$('qlTK').classList.toggle('hide',!laAdmin());moTab(chiLamViec()?'viec':'phieu');
   const app=navigator.standalone||matchMedia('(display-mode: standalone)').matches;
   $('goiYCaiND').innerHTML=huongDanCai();
-  $('goiYCai').classList.toggle('hide',app||localStorage.getItem('psc_an_cai')==='1')}
+  $('goiYCai').classList.toggle('hide',app||localStorage.getItem('psc_an_cai')==='1');veTB();dongBoTB();moTuLink();setTimeout(kiemNhac,800)}
 function huongDanCai(){const ua=navigator.userAgent,ios=/iPhone|iPad|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1),adr=/Android/.test(ua);
   if(/Zalo|FBAN|FBAV|FB_IAB|Messenger|Instagram|Line\b/i.test(ua))return 'Anh/chị đang mở trong Zalo hoặc Facebook nên chưa cài được. Bấm nút <b>⋯</b> ở góc trên, chọn <b>Mở bằng trình duyệt</b>'+(ios?' (Safari)':adr?' (Chrome)':'')+', rồi làm theo hướng dẫn hiện ra.';
   if(ios&&/CriOS|FxiOS|EdgiOS/.test(ua))return 'Bấm nút <b>Chia sẻ</b> trên thanh địa chỉ, chọn <b>Thêm vào MH chính</b> rồi bấm <b>Thêm</b>. Nếu không thấy mục này, mở link bằng <b>Safari</b>.';
@@ -413,7 +420,7 @@ function laQL(){return vtU().indexOf('quanly')>=0}
 function chiLamViec(){const r=vtU();return r.indexOf('quanly')<0&&r.indexOf('tiepnhan')<0&&(r.indexOf('kythuat')>=0||r.indexOf('giaovan')>=0)}
 function coQuyen(v){const r=vtU();if(r.indexOf('quanly')>=0)return true;
   if(v==='tao'||v==='sua'||v==='tra')return r.indexOf('tiepnhan')>=0;if(v==='xoa'||v==='tk')return false;return true}
-async function dangXuatApp(){if(!confirm('Đăng xuất khỏi máy này?'))return;try{await goi('dangXuat',TOKEN)}catch(e){}TOKEN='';localStorage.removeItem('psc_token');localStorage.removeItem('psc_cache');U=null;hienLogin()}
+async function dangXuatApp(){if(!confirm('Đăng xuất khỏi máy này?'))return;try{await goi('dangXuat',TOKEN)}catch(e){}await tatTBMay();TOKEN='';localStorage.removeItem('psc_token');localStorage.removeItem('psc_cache');luuTkSW();U=null;hienLogin()}
 
 /* ---------- TAB ---------- */
 function moTab(t){['phieu','viec','taikhoan'].forEach(x=>$('tab-'+x).classList.toggle('hide',x!==t));
@@ -474,7 +481,7 @@ function veBang(){const nay=homNay(),b=$('vBang');
     const tt=!ds.length?'<span class="mu">Rảnh</span>':dang?`<span class="st ${lopTTV(dang.trangThai)}" style="margin:0">${esc(dang.trangThai)}</span>`:'<span class="st st2" style="margin:0">Xong hết</span>';
     return`<div><span class="nv">${esc(n.ten)}</span><div class="mu">${t.xong}/${ds.length} việc${t.thu?' · thu '+tien(t.thu):''}${tre?' · <span class="tre">có việc trễ</span>':''}</div></div><div style="text-align:right">${tt}</div>`}).join('')+'</div>';
   b.classList.remove('hide')}
-async function taiLaiViec(){try{const r=await goi('dsViec',TOKEN);VIEC=r.viec||[];NV=r.nv||[];luuCache();veViec();if(VCT){const v=VIEC.find(x=>x.id===VCT.id);if(v&&!$('pgVCT').classList.contains('hide')){VCT=v;veVCT()}}}catch(e){}}
+async function taiLaiViec(){try{const r=await goi('dsViec',TOKEN);VIEC=r.viec||[];NV=r.nv||[];luuCache();veViec();kiemNhac();if(VCT){const v=VIEC.find(x=>x.id===VCT.id);if(v&&!$('pgVCT').classList.contains('hide')){VCT=v;veVCT()}}}catch(e){}}
 function capNhatV(v){const i=VIEC.findIndex(x=>x.id===v.id);if(i<0)VIEC.push(v);else VIEC[i]=v;luuCache();veViec();if(VCT&&VCT.id===v.id&&!$('pgVCT').classList.contains('hide')){VCT=v;veVCT()}}
 
 /* form giao việc */
@@ -797,7 +804,59 @@ async function guiTK(){try{TKS=await goi('luuTaiKhoan',TOKEN,{tenDN:$('tkUser').
 function moDoiMK(){$('mkCu').value='';$('mkMoi').value='';$('dlgMK').showModal()}
 async function guiMK(){try{await goi('doiMatKhau',TOKEN,$('mkCu').value,$('mkMoi').value);$('dlgMK').close();toast('Đã đổi mật khẩu')}catch(e){baoLoi(e)}}
 
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&TOKEN&&U&&!$('scApp').classList.contains('hide'))taiLaiDs()});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&TOKEN&&U&&!$('scApp').classList.contains('hide')){taiLaiDs();taiLaiViec()}});
+/* app đang mở: 3 phút tải lại việc, mỗi phút soát việc tới giờ chưa nhận */
+setInterval(()=>{if(!document.hidden&&TOKEN&&U&&!$('scApp').classList.contains('hide'))taiLaiViec()},180000);
+setInterval(()=>{if(!document.hidden&&TOKEN&&U)kiemNhac()},60000);
+
+/* ---------- NHẮC VIỆC: pop-up trong app ---------- */
+function gioHenV(v){return v.henLuc?new Date(v.henLuc.replace(/-/g,'/').replace('T',' ')+':00').getTime():0}
+function treChuaNhan(){const now=Date.now();return VIEC.filter(v=>v.trangThai==='Chờ nhận'&&gioHenV(v)&&gioHenV(v)<=now)}
+function kiemNhac(){if(!U||$('scApp').classList.contains('hide')||$('dlgNhac').open)return;
+  const tre=treChuaNhan(),cua=tre.filter(v=>v.nguoiLam===U.tenDN),khac=laQL()?tre.filter(v=>v.nguoiLam!==U.tenDN):[];
+  const moi=cua.concat(khac).filter(v=>!DA_NHAC.has(v.id+v.nguoiLam));if(!moi.length)return;
+  moi.forEach(v=>DA_NHAC.add(v.id+v.nguoiLam));
+  const dong=v=>{const p=Math.round((Date.now()-gioHenV(v))/60000);return`<div class="card" style="margin:8px 0;padding:10px"><div class="row"><b class="sp">${esc(v.ma)} · ${esc(v.loai)}</b><span style="color:var(--bad);font-weight:700">${p>1?'quá '+p+' phút':'tới giờ'}</span></div>
+    <div class="mu" style="margin:4px 0">${esc([v.khTen,v.diaChi].filter(Boolean).join(' · '))} · hẹn ${gio(v.henLuc.replace('T',' '))}</div>
+    ${v.nguoiLam===U.tenDN?`<button style="width:100%" onclick="nhanTuNhac('${esc(v.id)}')">✅ Nhận việc</button>`:`<div class="row"><span class="sp">Người làm: <b>${esc(v.tenNguoiLam)}</b></span><button class="ghost sm" onclick="$('dlgNhac').close();moTab('viec');moVCT('${esc(v.id)}')">Xem</button></div>`}</div>`};
+  $('nhTieuDe').textContent=cua.length?'⏰ Tới giờ, anh/chị chưa nhận việc':'⚠️ Có việc tới giờ chưa ai nhận';
+  $('nhND').innerHTML=moi.map(dong).join('');$('dlgNhac').showModal();
+  try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}}
+async function nhanTuNhac(id){try{const v=await goi('buocViec',TOKEN,id,'nhan');capNhatV(v);toast('Đã nhận việc '+v.ma);
+  $('dlgNhac').close();moTab('viec');moVCT(v.id);setTimeout(kiemNhac,500)}catch(e){baoLoi(e)}}
+function moTuLink(){const id=new URLSearchParams(location.search).get('viec');if(!id)return;history.replaceState(null,'',location.pathname);
+  if(VIEC.some(v=>v.id===id)){moTab('viec');moVCT(id)}}
+
+/* ---------- THÔNG BÁO ĐẨY (pop-up trên điện thoại kể cả khi tắt app) ---------- */
+function laIOS(){return/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)}
+function laAppCai(){return navigator.standalone||matchMedia('(display-mode: standalone)').matches}
+function coPush(){return'serviceWorker'in navigator&&'PushManager'in window&&'Notification'in window&&!TRONG_GAS}
+function canNhacTB(){const r=vtU();return r.some(x=>['admin','quanly','kythuat','giaovan'].indexOf(x)>=0)}
+async function luuTkSW(){try{if(!('caches'in window))return;const c=await caches.open('tk-psc');
+  if(TOKEN)await c.put('./__tk',new Response(JSON.stringify({token:TOKEN,api:API})));else await c.delete('./__tk')}catch(e){}}
+function b64uByte(s){const p='='.repeat((4-s.length%4)%4),b=atob((s+p).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(b,c=>c.charCodeAt(0))}
+async function layDK(){if(!coPush())return null;const r=await navigator.serviceWorker.getRegistration();return r?r.pushManager.getSubscription():null}
+let TB_TT='';
+async function veTB(){let h,goiY=false;
+  if(!coPush()){h=laIOS()&&!laAppCai()?'Để nhận thông báo nhắc việc trên iPhone: mở link app bằng Safari, bấm Chia sẻ > Thêm vào MH chính, rồi mở app từ biểu tượng ngoài màn hình và bật ở đây (cần iOS 16.4 trở lên).'
+      :TRONG_GAS?'Thông báo chỉ chạy trên bản app cài ra màn hình chính.':'Trình duyệt này không hỗ trợ thông báo đẩy.';goiY=laIOS()&&!laAppCai()}
+  else if(Notification.permission==='denied')h='Máy đang CHẶN thông báo của app. Vào Cài đặt điện thoại > Thông báo > Phiếu SC, bật Cho phép thông báo, rồi mở lại app.';
+  else{const dk=Notification.permission==='granted'?await layDK().catch(()=>null):null;
+    if(dk&&TB_TT!=='loi')h=`<div class="row"><span class="sp">✅ Máy này đã bật thông báo nhắc việc.</span></div><div class="row" style="margin-top:8px"><button class="ghost sm" onclick="thuTB()">Gửi thử</button><span class="sp"></span><button class="ghost sm" onclick="tatTB()">Tắt</button></div>`;
+    else{goiY=true;h=`Bật để điện thoại hiện pop-up khi được giao việc mới và khi tới giờ hẹn mà chưa nhận việc, kể cả lúc đang tắt app.<button style="width:100%;margin-top:8px" onclick="batTB()">🔔 Bật thông báo nhắc việc</button>`}}
+  $('tbTK').innerHTML='<h3>Thông báo nhắc việc</h3><div class="mu" style="line-height:1.5">'+h+'</div>';
+  $('tbViec').innerHTML='<h3>🔔 Thông báo nhắc việc</h3><div class="mu" style="line-height:1.5">'+h+'</div>';
+  $('tbViec').classList.toggle('hide',!(goiY&&canNhacTB()))}
+async function batTB(){try{if(!VAPID)VAPID=await goi('khoaVapid',TOKEN);
+  const q=await Notification.requestPermission();if(q!=='granted'){veTB();toast('Chưa được cho phép thông báo');return}
+  const reg=await navigator.serviceWorker.ready;let dk=await reg.pushManager.getSubscription();
+  if(!dk)dk=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64uByte(VAPID)});
+  await luuTkSW();await goi('dangKyThongBao',TOKEN,dk.endpoint);TB_TT='';veTB();toast('Đã bật thông báo, đang gửi thử...');
+  try{await goi('thuThongBao',TOKEN)}catch(e){baoLoi(e)}}catch(e){TB_TT='loi';baoLoi(e);veTB()}}
+async function dongBoTB(){try{if(!coPush()||Notification.permission!=='granted')return;const dk=await layDK();if(dk)await goi('dangKyThongBao',TOKEN,dk.endpoint)}catch(e){}}
+async function thuTB(){try{await goi('thuThongBao',TOKEN);toast('Đã gửi thử, chờ vài giây')}catch(e){baoLoi(e)}}
+async function tatTBMay(){try{const dk=await layDK();if(dk){try{await goi('huyThongBao',TOKEN,dk.endpoint)}catch(e){}await dk.unsubscribe()}}catch(e){}}
+async function tatTB(){if(!confirm('Tắt thông báo nhắc việc trên máy này?'))return;await tatTBMay();veTB();toast('Đã tắt thông báo')}
 khoiDong();
 </script>
 <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js')</script>
