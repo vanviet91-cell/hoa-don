@@ -33,6 +33,8 @@ button:disabled{opacity:.5}
 .seg button{flex:1;background:none;color:var(--tx);padding:8px;font-weight:500}
 .seg button.on{background:var(--card);box-shadow:0 1px 3px #0002;font-weight:700}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
+.ddBtn{display:flex;align-items:center;gap:8px;width:100%;box-sizing:border-box;text-align:left;background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:10px;padding:12px;font-size:15px;font-weight:500}
+.ddBox{border:1px solid var(--bd);border-radius:10px;padding:8px;margin-top:6px;background:var(--card)}
 .nlLuoi{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
 .nlLuoi .chip{border-radius:10px;min-width:0;padding:10px}.nlLuoi .chip span{white-space:normal;line-height:1.25;font-size:14px;overflow-wrap:anywhere}
 .chkc .chip:has(input:checked){border-color:var(--pri);background:color-mix(in srgb,var(--pri) 14%,var(--bg))}
@@ -233,7 +235,14 @@ img.xemPhieu{display:block;width:100%;border:1px solid var(--bd);border-radius:8
   <main>
     <div class="card">
       <div class="f"><span>Loại việc</span><div class="chips" id="vfLoai"></div></div>
-      <div class="f"><span>Người làm <b id="vfDem" style="color:var(--pri)"></b></span><div class="chkc"><label class="chip nlMo"><input type="checkbox" id="vfMo" onchange="if(this.checked)document.querySelectorAll('#vfNguoi input').forEach(c=>c.checked=false);demVF()"> 📢 Chưa gán, ai rảnh thì nhận</label></div><div class="chkc nlLuoi" id="vfNguoi" onchange="if(event.target.checked)$('vfMo').checked=false;demVF()"></div><div class="mu" style="font-size:12px;margin-top:4px">Chọn 1 hoặc nhiều người, nhiều người thì điểm chia đều</div></div>
+      <div class="f"><span>Người làm</span>
+        <button type="button" class="ddBtn" id="vfNLBtn" onclick="batNL()"><span id="vfNLTxt" class="sp">Chọn người làm</span><span id="vfNLMui">▾</span></button>
+        <div class="ddBox hide" id="vfNLBox">
+          <div class="chkc"><label class="chip nlMo"><input type="checkbox" id="vfMo" onchange="if(this.checked)document.querySelectorAll('#vfNguoi input').forEach(c=>c.checked=false);demVF(true)"> 📢 Chưa gán, ai rảnh thì nhận</label></div>
+          <div class="chkc nlLuoi" id="vfNguoi" onchange="if(event.target.checked)$('vfMo').checked=false;demVF(true)"></div>
+          <div class="row" style="margin-top:6px"><span class="mu sp" style="font-size:12px">Chọn nhiều người thì điểm chia đều</span><button type="button" class="ghost sm" onclick="dongNL()">Xong</button></div>
+        </div></div>
+
       <div class="f"><span>Hẹn lúc</span><input id="vfHen" type="datetime-local"></div>
       <div class="f"><span>Độ khó</span><label class="khoRow"><input type="checkbox" id="vfKho"><span>Việc khó / máy to<br><small class="mu">điểm nhân x<span id="vfHeSo">1,5</span></small></span></label></div>
       <div class="mu hide" id="vfPhieu"></div>
@@ -260,7 +269,9 @@ img.xemPhieu{display:block;width:100%;border:1px solid var(--bd);border-radius:8
   <div id="xgKy"><div class="row"><span class="mu sp">Khách ký xác nhận (không bắt buộc)</span><button class="ghost sm" type="button" onclick="xoaKy()">Ký lại</button></div><canvas id="kyO"></canvas></div>
   <div class="f hide chkc" id="xgLyDo"><span>Không làm được do</span><div class="chips"><label class="chip"><input type="radio" name="xgLD" value="khach" checked> Khách / khách quan</label><label class="chip"><input type="radio" name="xgLD" value="tho"> Lỗi thợ</label></div></div>
   <div class="f"><span id="xgKQNhan">Kết quả / ghi chú</span><textarea id="xgKQ"></textarea></div>
-  <div class="f" id="xgThuO"><span>Đã thu của khách (đ)</span><input id="xgThu" inputmode="numeric" oninput="dinhDang(this)"></div>
+  <div class="f" id="xgThuO"><span>Đã thu của khách (đ) <span id="xgCan" class="mu"></span></span>
+    <div class="row"><div class="f sp" style="margin:0"><small class="mu">💵 Tiền mặt</small><input id="xgTM" inputmode="numeric" oninput="dinhDang(this);tongThu()"></div><div class="f sp" style="margin:0"><small class="mu">🏦 Chuyển khoản</small><input id="xgCK" inputmode="numeric" oninput="dinhDang(this);tongThu()"></div></div>
+    <div class="mu" id="xgTong" style="font-size:13px;margin-top:4px"></div></div>
   <div class="row"><div class="f sp"><span>Phương tiện</span><select id="xgXe"><option>Xe cửa hàng</option><option>Xe cá nhân</option></select></div><div class="f" style="width:38%"><span>Số km (cả đi về)</span><input id="xgKm" inputmode="decimal"></div></div>
   <div class="row" style="margin-top:8px"><button class="ghost sp" type="button" onclick="$('dlgXong').close()">Huỷ</button><button class="ok sp" type="button" id="xgGui" onclick="guiXong()">Xác nhận</button></div>
 </form></dialog>
@@ -455,7 +466,14 @@ function thanhNgay(s){const m=String(s||'').match(/^(\d{4})-(\d\d)-(\d\d)[ T](\d
 function ngayViec(v){return String(v.henLuc||v.lucTao||'').slice(0,10)}
 function dsLam(v){return String(v.nguoiLam||'').split(',').map(x=>x.trim()).filter(Boolean)}
 function coLam(v,k){return dsLam(v).indexOf(k)>=0}
-function demVF(){const n=document.querySelectorAll('#vfNguoi input:checked').length;$('vfDem').textContent=$('vfMo').checked?'· Chưa gán':n?'· Đã chọn '+n+' người':''}
+let NL_T=0;
+function batNL(){$('vfNLBox').classList.contains('hide')?moNL():dongNL()}
+function moNL(){$('vfNLBox').classList.remove('hide');$('vfNLMui').textContent='▴'}
+function dongNL(){clearTimeout(NL_T);$('vfNLBox').classList.add('hide');$('vfNLMui').textContent='▾'}
+function demVF(tuChon){const ten=[...document.querySelectorAll('#vfNguoi input:checked')].map(c=>c.parentNode.textContent.trim());
+  const mo=$('vfMo').checked,e=$('vfNLTxt');e.textContent=mo?'📢 Chưa gán, ai rảnh thì nhận':ten.length?ten.join(', ')+(ten.length>1?' ('+ten.length+' người)':''):'Chọn người làm';
+  e.classList.toggle('mu',!mo&&!ten.length);
+  if(tuChon){clearTimeout(NL_T);NL_T=setTimeout(dongNL,mo?300:1500)}}
 function choMo(v){return !dsLam(v).length&&v.trangThai==='Chờ nhận'}
 function laTho(){const r=vtU();return r.indexOf('kythuat')>=0||r.indexOf('giaovan')>=0}
 function cuaToiV(v){return coLam(v,U.tenDN)||(choMo(v)&&laTho())}
@@ -508,10 +526,10 @@ function veViec(){if(!U)return;const nay=homNay(),ql=laQL();
 function veBang(){const nay=homNay(),b=$('vBang');
   if(VLOC!=='nay'){b.classList.add('hide');return}
   const hn=VIEC.filter(v=>v.trangThai!=='Đã huỷ'&&(vXong(v)?String(v.lucXong).slice(0,10)===nay:ngayViec(v)<=nay));
-  const tom=ds=>{const xong=ds.filter(v=>v.trangThai==='Hoàn thành'),thu=xong.reduce((s,v)=>s+(+v.daThu||0),0),km=xong.reduce((s,v)=>s+(+v.km||0),0);return{xong:xong.length,con:ds.filter(v=>!vXong(v)).length,thu,km}};
+  const tom=ds=>{const xong=ds.filter(v=>v.trangThai==='Hoàn thành'),thu=xong.reduce((s,v)=>s+(+v.daThu||0),0),tm=xong.reduce((s,v)=>s+thuTMv(v),0),km=xong.reduce((s,v)=>s+(+v.km||0),0);return{xong:xong.length,con:ds.filter(v=>!vXong(v)).length,thu,tm,ck:thu-tm,km}};
   if(!laQL()){const t=tom(hn);if(!hn.length){b.classList.add('hide');return}
     b.innerHTML=`<div class="vcTom"><div><b>${t.con}</b><span class="mu">Còn lại</span></div><div><b>${t.xong}</b><span class="mu">Đã xong</span></div><div><b>${t.thu?Math.round(t.thu/1000).toLocaleString('vi-VN')+'k':'0'}</b><span class="mu">Đã thu</span></div></div>
-      ${t.thu?`<div class="mu" style="margin-top:6px">Tiền đã thu hôm nay: <b>${tien(t.thu)}</b>, cuối ngày nộp lại cửa hàng.</div>`:''}`;b.classList.remove('hide');return}
+      ${t.thu?`<div class="mu" style="margin-top:6px">Đã thu hôm nay <b>${tien(t.thu)}</b>${t.ck?` (chuyển khoản ${tien(t.ck)})`:''}. Tiền mặt cần nộp lại cửa hàng: <b>${tien(t.tm)}</b>.</div>`:''}`;b.classList.remove('hide');return}
   const nvs=NV.filter(n=>n.lam);if(!nvs.length){b.innerHTML='<div class="mu">Chưa có nhân viên Kỹ thuật/Giao vận. Vào Tài khoản, tạo tài khoản và tích vai trò Kỹ thuật hoặc Giao vận.</div>';b.classList.remove('hide');return}
   b.innerHTML='<h3>Bảng hôm nay</h3><div class="bang">'+nvs.map(n=>{const ds=hn.filter(v=>coLam(v,n.tenDN)),t=tom(ds);
     const dang=ds.filter(v=>!vXong(v)).sort((a,c)=>String(a.henLuc).localeCompare(String(c.henLuc)))[0],tre=ds.some(treViec);
@@ -526,7 +544,7 @@ function moVForm(v,p){if(!laQL())return;VFM={id:v?v.id:'',loai:v?v.loai:(p?'Sử
   $('vfTieuDe').textContent=v?'Sửa việc '+v.ma:'Giao việc';
   const lam=NV.filter(n=>n.lam),ds=lam.length?lam:NV;
   $('vfNguoi').innerHTML=ds.map(n=>`<label class="chip"><input type="checkbox" value="${esc(n.tenDN)}" ${v&&coLam(v,n.tenDN)?'checked':''}><span>${esc(n.ten)}</span></label>`).join('');
-  $('vfMo').checked=!!(v&&!dsLam(v).length);demVF();
+  $('vfMo').checked=!!(v&&!dsLam(v).length);demVF();dongNL();
   $('vfKho').checked=!!(v&&+v.heSo>1);$('vfHeSo').textContent=String(cfgDiem().kho).replace('.',',');
   let hen=v?v.henLuc:'';if(!v){const d=new Date(Date.now()+3600000);d.setMinutes(d.getMinutes()<30?30:60,0,0);hen=`${d.getFullYear()}-${z2(d.getMonth()+1)}-${z2(d.getDate())}T${z2(d.getHours())}:${z2(d.getMinutes())}`}
   $('vfHen').value=hen;
@@ -562,7 +580,7 @@ function veVCT(){const v=VCT,xong=vXong(v),ql=laQL(),cuaToi=coLam(v,U.tenDN)||(c
   h+=`<div class="card"><div class="row"><h3 class="sp" style="margin:0">Ảnh (${(v.anh||[]).length})</h3>${cuaToi&&(!xong||ql)?`<button class="ghost sm" onclick="$('fileV').click()">📷 Chụp ảnh</button>`:''}</div>
     <div class="grid" style="margin-top:8px">${(v.anh||[]).map(a=>`<div class="ph" id="pv_${esc(a.id)}" onclick="phongTo('${esc(a.id)}')">Đang tải...<span class="gd">${esc((a.chup||gio(a.luc)).slice(0,5))}</span>${ql||(a.ai===U.ten&&!xong)?`<button class="x" onclick="event.stopPropagation();xoaAnhV('${esc(a.id)}')">×</button>`:''}</div>`).join('')}</div>
     ${(v.anh||[]).length?'':'<div class="mu">Chưa có ảnh. Chụp ảnh lúc lắp đặt/giao hàng xong làm bằng chứng.</div>'}</div>`;
-  if(xong&&v.trangThai!=='Đã huỷ')h+=`<div class="card"><h3>Kết quả</h3><div class="kv">${kv('Kết quả',esc(v.ketQua).replace(/\n/g,'<br>'))}${kv('Đã thu',v.daThu?'<b>'+tien(v.daThu)+'</b>':(v.thuHo?'<span class="tre">Chưa thu</span>':''))}${kv('Phương tiện',esc(v.xe))}${kv('Số km',v.km?esc(v.km)+' km':'')}</div>
+  if(xong&&v.trangThai!=='Đã huỷ')h+=`<div class="card"><h3>Kết quả</h3><div class="kv">${kv('Kết quả',esc(v.ketQua).replace(/\n/g,'<br>'))}${kv('Đã thu',v.daThu?'<b>'+tien(v.daThu)+'</b>'+(thuCKv(v)?`<div class="mu" style="font-size:13px">💵 Tiền mặt ${tien(thuTMv(v))} · 🏦 CK ${tien(thuCKv(v))}</div>`:'<div class="mu" style="font-size:13px">💵 Tiền mặt</div>'):(v.thuHo?'<span class="tre">Chưa thu</span>':''))}${kv('Phương tiện',esc(v.xe))}${kv('Số km',v.km?esc(v.km)+' km':'')}</div>
     ${v.kyTen?`<div class="mu" style="margin-top:8px">Chữ ký khách</div><div id="pv_${esc(v.kyTen)}" style="background:#fff;border-radius:8px;min-height:60px;margin-top:4px" class="mu">Đang tải...</div>`:''}</div>`;
   if(v.trangThai==='Hoàn thành'||v.trangThai==='Không làm được'){const dv=diemViec(v),n=Math.max(1,dsLam(v).length);
     h+=`<div class="card"><div class="row"><h3 class="sp" style="margin:0">Điểm việc</h3><span class="diem">${soD(dv.tong)}</span></div>
@@ -595,10 +613,15 @@ async function huyV(){const l=prompt('Lý do huỷ việc '+VCT.ma+'?');if(l===n
 
 /* báo hoàn thành + chữ ký */
 let KY={ve:false,dang:false};
+function soTien(x){return Number(String(x||'').replace(/\D/g,''))||0}
+function tongThu(){const tm=soTien($('xgTM').value),ck=soTien($('xgCK').value),t=tm+ck,can=+(VCT&&VCT.thuHo)||0;
+  $('xgTong').innerHTML=t?`Tổng thu <b>${tien(t)}</b>`+(can&&t<can?` · <span class="tre">còn thiếu ${tien(can-t)}</span>`:can&&t>can?` · thu dư ${tien(t-can)}`:''):''}
+function thuTMv(v){return(v.thuTM||v.thuCK)?(+v.thuTM||0):(+v.daThu||0)}
+function thuCKv(v){return +v.thuCK||0}
 function moXong(khong){const v=VCT;if(!khong&&!(v.anh||[]).length){toast('Chụp ít nhất 1 ảnh trước khi báo hoàn thành',4000);$('fileV').click();return}
   KY.khong=khong;$('xgTieuDe').textContent=khong?'Không làm được':'Báo hoàn thành';$('xgKQNhan').textContent=khong?'Lý do (bắt buộc)':'Kết quả / ghi chú';
   $('xgKy').classList.toggle('hide',khong);$('xgLyDo').classList.toggle('hide',!khong);document.querySelector('input[name=xgLD][value=khach]').checked=true;$('xgThuO').classList.toggle('hide',khong);$('xgKQ').value='';
-  $('xgThu').value=!khong&&v.thuHo?Number(v.thuHo).toLocaleString('vi-VN'):'';$('xgKm').value='';$('xgGui').className=khong?'bad sp':'ok sp';
+  $('xgTM').value=!khong&&v.thuHo?Number(v.thuHo).toLocaleString('vi-VN'):'';$('xgCK').value='';$('xgCan').textContent=v.thuHo?'· cần thu '+tien(v.thuHo):'';tongThu();$('xgKm').value='';$('xgGui').className=khong?'bad sp':'ok sp';
   $('dlgXong').showModal();if(!khong)ganKy()}
 function ganKy(){const c=$('kyO'),r=c.getBoundingClientRect(),k=window.devicePixelRatio||1;c.width=Math.round(r.width*k);c.height=Math.round(r.height*k);
   const g=c.getContext('2d');g.setTransform(k,0,0,k,0,0);g.fillStyle='#fff';g.fillRect(0,0,r.width,r.height);g.lineWidth=2.5;g.lineCap='round';g.lineJoin='round';g.strokeStyle='#111';KY.ve=false;
@@ -609,7 +632,7 @@ function ganKy(){const c=$('kyO'),r=c.getBoundingClientRect(),k=window.devicePix
   ['pointerup','pointercancel','pointerleave'].forEach(t=>c.addEventListener(t,()=>{KY.dang=false}))}
 function xoaKy(){ganKy()}
 function anhKy(){const c=$('kyO'),w=Math.min(600,c.width),h=Math.round(c.height*w/c.width),o=document.createElement('canvas');o.width=w;o.height=h;o.getContext('2d').drawImage(c,0,0,w,h);return o.toDataURL('image/png')}
-async function guiXong(){const khong=KY.khong,d={khongLam:khong,lyDo:(document.querySelector('input[name=xgLD]:checked')||{}).value,ketQua:$('xgKQ').value,daThu:$('xgThu').value,xe:$('xgXe').value,km:$('xgKm').value};
+async function guiXong(){const khong=KY.khong,d={khongLam:khong,lyDo:(document.querySelector('input[name=xgLD]:checked')||{}).value,ketQua:$('xgKQ').value,thuTM:khong?'':$('xgTM').value,thuCK:khong?'':$('xgCK').value,xe:$('xgXe').value,km:$('xgKm').value};
   if(khong&&!d.ketQua.trim()){toast('Ghi lý do không làm được');return}
   if(!khong&&KY.ve)d.kyTen=anhKy();
   $('xgGui').disabled=true;try{const v=await goi('xongViec',TOKEN,VCT.id,d);$('dlgXong').close();VCT=v;capNhatV(v);veVCT();toast(khong?'Đã báo không làm được':'Đã hoàn thành '+v.ma)}catch(e){baoLoi(e)}finally{$('xgGui').disabled=false}}
@@ -623,10 +646,10 @@ function veThongKe(){const th=$('tkvThang').value,c=cfgDiem(),ds=VIEC.filter(v=>
     const loai={};xong.forEach(v=>loai[v.loai]=(loai[v.loai]||0)+1);
     const ct=m.filter(vXong).map(v=>{const n=Math.max(1,dsLam(v).length);return{v,n,d:diemViec(v).tong/n}});
     return{ten:ten[k],giao:m.length,xong:xong.length,khong:m.filter(v=>v.trangThai==='Không làm được').length,dung:cg.length?Math.round(cg.filter(Boolean).length*100/cg.length):null,
-      km:xong.reduce((s,v)=>s+(+v.km||0),0),kmCN:xong.filter(v=>v.xe==='Xe cá nhân').reduce((s,v)=>s+(+v.km||0),0),thu:xong.reduce((s,v)=>s+(+v.daThu||0),0),loai,ct,diem:ct.reduce((s,x)=>s+x.d,0)}}).filter(r=>r.giao).sort((a,b)=>b.diem-a.diem||b.xong-a.xong);
+      km:xong.reduce((s,v)=>s+(+v.km||0),0),kmCN:xong.filter(v=>v.xe==='Xe cá nhân').reduce((s,v)=>s+(+v.km||0),0),thu:xong.reduce((s,v)=>s+(+v.daThu||0),0),tm:xong.reduce((s,v)=>s+thuTMv(v),0),loai,ct,diem:ct.reduce((s,x)=>s+x.d,0)}}).filter(r=>r.giao).sort((a,b)=>b.diem-a.diem||b.xong-a.xong);
   $('tkvND').innerHTML=hang.length?hang.map(r=>`<div class="tk" style="display:block"><div class="row"><b class="sp">${esc(r.ten)}</b><span class="diem" style="font-size:18px">${soD(r.diem)} điểm</span></div>
     <div class="mu">≈ <b>${tien(Math.round(r.diem*c.donGia))}</b> (${tien(c.donGia)}/điểm) · <b>${r.xong}</b>/${r.giao} việc xong</div>
-    <div class="mu">${r.dung!==null?'Đúng giờ '+r.dung+'%':'Chưa đủ dữ liệu giờ đến'}${r.khong?' · '+r.khong+' không làm được':''} · ${r.km.toLocaleString('vi-VN')} km${r.kmCN?' (xe cá nhân '+r.kmCN.toLocaleString('vi-VN')+' km)':''} · thu ${tien(r.thu)}</div>
+    <div class="mu">${r.dung!==null?'Đúng giờ '+r.dung+'%':'Chưa đủ dữ liệu giờ đến'}${r.khong?' · '+r.khong+' không làm được':''} · ${r.km.toLocaleString('vi-VN')} km${r.kmCN?' (xe cá nhân '+r.kmCN.toLocaleString('vi-VN')+' km)':''} · thu ${tien(r.thu)}${r.thu&&r.thu!==r.tm?` (tiền mặt ${tien(r.tm)}, CK ${tien(r.thu-r.tm)})`:''}</div>
     <div class="mu">${Object.entries(r.loai).map(([l,n])=>esc(l)+' '+n).join(' · ')}</div>
     ${r.ct.length?`<details style="margin-top:4px"><summary class="mu">Chi tiết điểm từng việc</summary><div class="dct mu">${r.ct.sort((a,b)=>String(a.v.lucXong).localeCompare(String(b.v.lucXong))).map(x=>`<div><span>${esc(String(x.v.lucXong).slice(8,10)+'/'+String(x.v.lucXong).slice(5,7))} ${esc(x.v.ma)} · ${esc(x.v.loai)}${x.n>1?' (chia '+x.n+')':''}${x.v.trangThai!=='Hoàn thành'?' · không làm được':''}</span><span>${soD(x.d)}</span></div>`).join('')}</div></details>`:''}</div>`).join('')
     :'<div class="empty">Tháng này chưa có việc.</div>'}
