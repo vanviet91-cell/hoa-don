@@ -1069,8 +1069,9 @@ function gioPhut(p){p=Math.round(p);return p>=60?Math.floor(p/60)+'g'+(p%60?z2(p
 function tomS(s){return`<b>${soVN(s.cong)}</b> công · ${s.soCa} ca · muộn ${s.tre}${s.tre?' ('+s.phutTre+'p)':''} · thiếu giờ ${s.som}${s.som?' ('+s.phutSom+'p)':''}${s.tc?' · <span style="color:var(--ok)">tăng ca '+gioPhut(s.tc)+'</span>':''}${s.ngoai?' · <span style="color:var(--bad)">ngoài vùng '+s.ngoai+'</span>':''}${s.thieuRa?' · <span style="color:var(--warn)">quên ra '+s.thieuRa+'</span>':''}${s.nghi?' · <span style="color:var(--info)">nghỉ phép '+soVN(s.nghi)+'/'+soVN(+(CCB&&CCB.cfg.soNgayNghi)||0)+' ngày</span>':''}${s.vang?' · <b style="color:var(--bad)">tự ý nghỉ '+s.vang+' ca'+(s.truDiem?' (−'+soVN(s.truDiem)+' điểm)':'')+'</b>':''}`}
 function luongNV(k,p,th){const l=CCB&&CCB.luong?CCB.luong[k]:null;if(!CCB||!CCB.luong)return null;const c=cfgDiem();
   const dm=diemViecThang(k,th);
-  const cong=p?p.s.cong:0,tc=p?p.s.tc:0,a=l?Math.round(cong*(+l.ngay||0)):0,b=l?Math.round(tc/60*(+l.tc||0)):0,d=Math.round(dm*c.donGia);
-  return{l,cong,tc,a,b,dm,d,donGia:c.donGia,tong:a+b+d}}
+  const hs=l&&+l.hsCN>1?+l.hsCN:1,congCN=p?Object.keys(p.ngay).filter(x=>new Date(x+'T12:00:00Z').getUTCDay()===0).reduce((s,x)=>s+(p.ngay[x].cong||0),0):0;
+  const cong=p?p.s.cong:0,tc=p?p.s.tc:0,a=l?Math.round((cong+congCN*(hs-1))*(+l.ngay||0)):0,b=l?Math.round(tc/60*(+l.tc||0)):0,d=Math.round(dm*c.donGia);
+  return{l,cong,tc,a,b,dm,d,hs,congCN,donGia:c.donGia,tong:a+b+d}}
 function veBangCong(){const e=$('ccBang');if(!e||!CCB)return;const m=tongCong(CCB.ds,CCB.cfg,CCB.ngay);let h='';
   if(laQL()){const nv=CCB.nv||[];
     if(CCB.thang===CCB.ngay.slice(0,7)){const vao=nv.filter(n=>m[n.tenDN]&&m[n.tenDN].ngay[CCB.ngay]),chua=nv.filter(n=>vao.indexOf(n)<0);
@@ -1099,16 +1100,17 @@ function moCCNV(k){CCNV_K=k;const m=tongCong(CCB.ds,CCB.cfg,CCB.ngay),p=m[k],n=(
   let h=`<div class="row" style="gap:10px;margin-bottom:8px">${avt(k,ten,48)}<div class="sp"><h3 style="margin:0">${esc(ten)}</h3><div class="mu">Tháng ${esc(CCB.thang.slice(5))}/${esc(CCB.thang.slice(0,4))}</div></div></div>`;
   const L=luongNV(k,p,CCB.thang);
   if(L)h+=`<div class="card" style="margin:0 0 8px"><b>💰 Lương tạm tính</b>
-    <div class="dct mu"><div><span>${soVN(L.cong)} công × ${tien(L.l?+L.l.ngay:0)}</span><span>${tien(L.a)}</span></div><div><span>Tăng ca ${gioPhut(L.tc)} × ${tien(L.l?+L.l.tc:0)}/giờ</span><span>${tien(L.b)}</span></div><div><span>Điểm việc ${soD(L.dm)} × ${tien(L.donGia)}</span><span>${tien(L.d)}</span></div><div><b>Tổng</b><b>${tien(L.tong)}</b></div></div>
+    <div class="dct mu"><div><span>${soVN(L.cong)} công × ${tien(L.l?+L.l.ngay:0)}${L.hs>1&&L.congCN?` (Chủ nhật ${soVN(L.congCN)} công × ${soVN(L.hs)})`:''}</span><span>${tien(L.a)}</span></div><div><span>Tăng ca ${gioPhut(L.tc)} × ${tien(L.l?+L.l.tc:0)}/giờ</span><span>${tien(L.b)}</span></div><div><span>Điểm việc ${soD(L.dm)} × ${tien(L.donGia)}</span><span>${tien(L.d)}</span></div><div><b>Tổng</b><b>${tien(L.tong)}</b></div></div>
     <div class="mu" style="font-size:12px">Chưa gồm hoa hồng bán hàng (nằm ở KiotViet). Điểm việc tính theo các việc app đang tải.</div>
     <div class="row" style="margin-top:6px"><div class="f sp"><span>Lương 1 công (đ)</span><input id="lgNgay" inputmode="numeric" value="${L.l?L.l.ngay:''}"></div><div class="f sp"><span>Tăng ca (đ/giờ)</span><input id="lgTC" inputmode="numeric" value="${L.l?L.l.tc:''}"></div></div>
+    <div class="f"><span>Tiền công Chủ nhật nhân (x)</span><input id="lgCN" inputmode="decimal" value="${String(L.hs).replace('.',',')}"></div>
     <button class="ghost" type="button" style="width:100%" onclick="luuLG('${esc(k)}')">Lưu mức lương</button></div>`;
   {const T=thiDua(k,p);h+=`<div class="bang" style="margin-bottom:8px"><span>🏆 Điểm thi đua</span><b>${soD(T.tong)}</b></div><div class="mu" style="margin:-4px 0 8px">Điểm việc ${soD(T.dv)}${T.tru?' − tự ý nghỉ '+soD(T.tru):''}</div>`}
   if(laQL())h+=`<button class="ghost" type="button" style="width:100%;margin-bottom:6px" onclick="moNghi('${esc(k)}')">🏖 Ghi nghỉ phép hộ</button>`;
   if(laQL())h+=`<button class="ghost" type="button" style="width:100%;margin-bottom:8px" onclick="moSC('${esc(k)}',CCB.ngay,caGio(CCB.cfg,gioMay()).i,'vao')">✏️ Sửa / bổ sung giờ chấm</button>`;
   h+=p?`<div style="margin-bottom:6px">${tomS(p.s)}</div>${dsNgayCC(p)}`:'<div class="mu">Chưa chấm công tháng này.</div>';
   $('ccNVND').innerHTML=h;if(!$('dlgCCNV').open)$('dlgCCNV').showModal()}
-async function luuLG(k){try{CCB.luong=await goi('luuLuong',TOKEN,k,$('lgNgay').value,$('lgTC').value);toast('Đã lưu mức lương');moCCNV(k);veBangCong()}catch(e){baoLoi(e)}}
+async function luuLG(k){try{CCB.luong=await goi('luuLuong',TOKEN,k,$('lgNgay').value,$('lgTC').value,$('lgCN').value);toast('Đã lưu mức lương');moCCNV(k);veBangCong()}catch(e){baoLoi(e)}}
 let SC_K='';
 function moSC(k,ngay,ca,loai){SC_K=k;const n=(CCB.nv||[]).find(x=>x.tenDN===k);$('scTieuDe').textContent='Sửa / bổ sung giờ: '+(n?n.ten:k);
   $('scCa').innerHTML=dsCaC(CCB.cfg).map(c=>`<option value="${c.i}">${esc(c.ten)} (${hVN(c.s)} - ${hVN(c.e)})</option>`).join('');
