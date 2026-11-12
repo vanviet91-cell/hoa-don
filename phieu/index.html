@@ -54,6 +54,7 @@ nav button b{display:block;font-size:21px;line-height:1.1}
 nav button.on{color:var(--pri)}
 #fab{position:fixed;right:16px;bottom:calc(74px + env(safe-area-inset-bottom));border-radius:999px;padding:14px 20px;box-shadow:0 6px 18px #0004;z-index:6}
 .page{position:fixed;inset:0;background:var(--bg);z-index:20;overflow:auto;padding:env(safe-area-inset-top) 0 calc(24px + env(safe-area-inset-bottom))}
+#pgCT{z-index:21}#pgForm{z-index:22}#pgVForm{z-index:23}
 .page .top{position:sticky;top:0;background:var(--bg);display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--bd);z-index:2}
 .page .top b{flex:1;font-size:18px}
 .kv{display:grid;grid-template-columns:110px 1fr;gap:6px 10px;font-size:15px}
@@ -121,7 +122,7 @@ img.xemPhieu{display:block;width:100%;border:1px solid var(--bd);border-radius:8
       <div class="f"><span>Tên đăng nhập</span><input id="lgUser" name="username" autocapitalize="off" autocorrect="off" autocomplete="username"></div>
       <div class="f"><span>Mật khẩu</span><input id="lgPass" name="password" type="password" autocomplete="current-password"></div>
       <button id="lgBtn" type="submit" style="width:100%;margin-top:6px">Đăng nhập</button>
-      <div class="mu hide" id="lgGhiChu" style="margin-top:8px">Lần đầu dùng app: tạo tài khoản Quản lý. Sau đó vào mục Tài khoản để tạo tài khoản cho nhân viên.</div>
+      <div class="mu hide" id="lgGhiChu" style="margin-top:8px">Lần đầu dùng app: tạo tài khoản Admin. Sau đó vào mục Tài khoản để tạo tài khoản cho nhân viên.</div>
     </form>
     <a class="card hide banMoi" href="#" target="_blank" style="display:block;border:1px solid #0f766e;text-decoration:none;color:inherit"><b>📲 Đã có bản app cài trên máy</b><div class="mu" style="margin-top:4px">Bấm vào đây để mở bản app mới, rồi Thêm vào màn hình chính.</div></a>
     <div class="card hide" id="lgCai" style="border:1px solid #2563eb55"><b>Nên cài thành app trước khi đăng nhập</b><div class="mu" id="lgCaiND" style="margin-top:6px;line-height:1.5"></div></div>
@@ -156,7 +157,7 @@ img.xemPhieu{display:block;width:100%;border:1px solid var(--bd);border-radius:8
       <div class="card"><h3>Tài khoản của tôi</h3><div id="toiInfo"></div>
         <div class="row" style="margin-top:10px"><button class="ghost sm" onclick="moDoiMK()">Đổi mật khẩu</button><span class="sp"></span><button class="ghost sm" onclick="dangXuatApp()">Đăng xuất</button></div></div>
       <div class="card" id="qlTK"><div class="row"><h3 class="sp" style="margin:0">Tài khoản nhân viên</h3><button class="sm" onclick="moTK()">+ Thêm</button></div><div id="dsTK" style="margin-top:8px"></div>
-        <div class="mu" style="margin-top:8px">Quản lý: toàn quyền, xoá phiếu, quản lý tài khoản. Tiếp nhận: tạo phiếu, cập nhật, trả máy. Kỹ thuật: xem, cập nhật tình trạng sửa, thêm ảnh, nhận việc được giao. Giao vận: nhận việc giao hàng, lắp đặt được giao.</div></div>
+        <div class="mu" style="margin-top:8px">Admin: toàn quyền, kể cả quản lý tài khoản. Quản lý: sắp xếp mọi việc, giao việc, xoá phiếu, trừ quản lý tài khoản. Tiếp nhận: tạo phiếu, cập nhật, trả máy. Kỹ thuật: xem, cập nhật tình trạng sửa, thêm ảnh, nhận việc được giao. Giao vận: nhận việc giao hàng, lắp đặt được giao.</div></div>
     </div>
   </main>
   <button id="fab" onclick="moForm()">+ Tiếp nhận máy</button>
@@ -279,7 +280,7 @@ img.xemPhieu{display:block;width:100%;border:1px solid var(--bd);border-radius:8
   <h3 style="margin-top:0" id="tkTieuDe">Tài khoản</h3>
   <div class="f"><span>Họ tên</span><input id="tkTen"></div>
   <div class="f"><span>Tên đăng nhập</span><input id="tkUser" autocapitalize="off" autocorrect="off"></div>
-  <div class="f"><span>Vai trò (chọn được nhiều)</span><div class="chips" id="tkVaiTro"><label class="chip"><input type="checkbox" value="tiepnhan"> Tiếp nhận</label><label class="chip"><input type="checkbox" value="kythuat"> Kỹ thuật</label><label class="chip"><input type="checkbox" value="giaovan"> Giao vận</label><label class="chip"><input type="checkbox" value="quanly"> Quản lý</label></div></div>
+  <div class="f"><span>Vai trò (chọn được nhiều)</span><div class="chips" id="tkVaiTro"><label class="chip"><input type="checkbox" value="tiepnhan"> Tiếp nhận</label><label class="chip"><input type="checkbox" value="kythuat"> Kỹ thuật</label><label class="chip"><input type="checkbox" value="giaovan"> Giao vận</label><label class="chip"><input type="checkbox" value="quanly"> Quản lý</label><label class="chip"><input type="checkbox" value="admin"> Admin</label></div></div>
   <div class="f"><span id="tkMKNhan">Mật khẩu</span><input id="tkMK" type="text" autocapitalize="off" autocorrect="off"></div>
   <label class="row hide" id="tkKhoaO" style="margin:8px 0"><input type="checkbox" id="tkKhoa" style="width:22px;height:22px"> Khoá tài khoản (không đăng nhập được)</label>
   <div class="row"><button class="ghost sp" type="button" onclick="$('dlgTK').close()">Huỷ</button><button class="sp" type="button" onclick="guiTK()">Lưu</button></div>
@@ -384,7 +385,7 @@ async function khoiDong(){
 function luuCache(){try{localStorage.setItem('psc_cache',JSON.stringify({ht:HT,user:U,phieu:DS,tong:TONG,viec:VIEC,nv:NV}))}catch(e){}}
 function hienLogin(){$('scApp').classList.add('hide');$('scLogin').classList.remove('hide');
   const dau=HT&&!HT.coTaiKhoan;$('lgCuaHang').textContent=HT?HT.tenCuaHang:'';
-  $('lgTieuDe').textContent=dau?'Tạo tài khoản Quản lý':'Đăng nhập';$('lgBtn').textContent=dau?'Tạo tài khoản':'Đăng nhập';
+  $('lgTieuDe').textContent=dau?'Tạo tài khoản Admin':'Đăng nhập';$('lgBtn').textContent=dau?'Tạo tài khoản':'Đăng nhập';
   $('lgTenO').classList.toggle('hide',!dau);$('lgGhiChu').classList.toggle('hide',!dau);$('lgPass').autocomplete=dau?'new-password':'current-password';
   const app=navigator.standalone||matchMedia('(display-mode: standalone)').matches;$('lgCaiND').innerHTML=huongDanCai();$('lgCai').classList.toggle('hide',!!app);
   if(!dau&&!$('lgUser').value)$('lgUser').value=localStorage.getItem('psc_user')||''}
@@ -395,7 +396,7 @@ async function guiDangNhap(){const u=$('lgUser').value.trim(),p=$('lgPass').valu
     const d=await goi('moApp',TOKEN);DS=d.phieu;TONG=d.tongPhieu||DS.length;VIEC=d.viec||[];NV=d.nv||[];luuCache();vaoApp()}catch(e){baoLoi(e)}finally{$('lgBtn').disabled=false}}
 function vaoApp(){$('scLogin').classList.add('hide');$('scApp').classList.remove('hide');
   $('who').innerHTML=`<b>${esc(U.ten)}</b><br>${esc(U.tenVaiTro)}`;
-  $('fab').classList.toggle('hide',!coQuyen('tao'));$('qlTK').classList.toggle('hide',!laQL());moTab(chiLamViec()?'viec':'phieu');
+  $('fab').classList.toggle('hide',!coQuyen('tao'));$('qlTK').classList.toggle('hide',!laAdmin());moTab(chiLamViec()?'viec':'phieu');
   const app=navigator.standalone||matchMedia('(display-mode: standalone)').matches;
   $('goiYCaiND').innerHTML=huongDanCai();
   $('goiYCai').classList.toggle('hide',app||localStorage.getItem('psc_an_cai')==='1')}
@@ -406,7 +407,8 @@ function huongDanCai(){const ua=navigator.userAgent,ios=/iPhone|iPad|iPod/.test(
   if(adr)return '1. Bấm nút <b>⋮</b> ở góc trên bên phải Chrome.<br>2. Chọn <b>Thêm vào màn hình chính</b> (hoặc <b>Cài đặt ứng dụng</b>).<br>3. Bấm <b>Thêm</b>. Biểu tượng app hiện trên màn hình.';
   return 'Mở link này trên điện thoại: iPhone dùng Safari, Android dùng Chrome, rồi thêm vào màn hình chính.'}
 function anGoiYCai(){localStorage.setItem('psc_an_cai','1');$('goiYCai').classList.add('hide')}
-function vtU(){return String(U&&U.vaiTro||'').split(',')}
+function vtU(){const r=String(U&&U.vaiTro||'').split(',');if(r.indexOf('admin')>=0)r.push('quanly');return r}
+function laAdmin(){return vtU().indexOf('admin')>=0}
 function laQL(){return vtU().indexOf('quanly')>=0}
 function chiLamViec(){const r=vtU();return r.indexOf('quanly')<0&&r.indexOf('tiepnhan')<0&&(r.indexOf('kythuat')>=0||r.indexOf('giaovan')>=0)}
 function coQuyen(v){const r=vtU();if(r.indexOf('quanly')>=0)return true;
@@ -473,7 +475,7 @@ function veBang(){const nay=homNay(),b=$('vBang');
     return`<div><span class="nv">${esc(n.ten)}</span><div class="mu">${t.xong}/${ds.length} việc${t.thu?' · thu '+tien(t.thu):''}${tre?' · <span class="tre">có việc trễ</span>':''}</div></div><div style="text-align:right">${tt}</div>`}).join('')+'</div>';
   b.classList.remove('hide')}
 async function taiLaiViec(){try{const r=await goi('dsViec',TOKEN);VIEC=r.viec||[];NV=r.nv||[];luuCache();veViec();if(VCT){const v=VIEC.find(x=>x.id===VCT.id);if(v&&!$('pgVCT').classList.contains('hide')){VCT=v;veVCT()}}}catch(e){}}
-function capNhatV(v){const i=VIEC.findIndex(x=>x.id===v.id);if(i<0)VIEC.push(v);else VIEC[i]=v;luuCache();veViec()}
+function capNhatV(v){const i=VIEC.findIndex(x=>x.id===v.id);if(i<0)VIEC.push(v);else VIEC[i]=v;luuCache();veViec();if(VCT&&VCT.id===v.id&&!$('pgVCT').classList.contains('hide')){VCT=v;veVCT()}}
 
 /* form giao việc */
 function moVForm(v,p){if(!laQL())return;VFM={id:v?v.id:'',loai:v?v.loai:(p?'Sửa tại nhà':'Lắp đặt'),phieuId:v?v.phieuId:(p?p.id:'')};
@@ -784,7 +786,7 @@ function xemTruoc(){clearTimeout(xemTruoc.h);xemTruoc.h=setTimeout(()=>{if(!FM||
 /* ---------- TÀI KHOẢN ---------- */
 let TKS=[],TK_SUA=null;
 async function veTaiKhoan(){$('toiInfo').innerHTML=`<b>${esc(U.ten)}</b> · ${esc(U.tenDN)} · ${esc(U.tenVaiTro)}`;
-  if(!laQL())return;try{TKS=await goi('dsTaiKhoan',TOKEN);veDsTK()}catch(e){baoLoi(e)}}
+  if(!laAdmin())return;try{TKS=await goi('dsTaiKhoan',TOKEN);veDsTK()}catch(e){baoLoi(e)}}
 function veDsTK(){$('dsTK').innerHTML=TKS.map(t=>`<div class="tk"><div class="sp"><b>${esc(t.ten)}</b>${t.khoa?' <span class="tag st4">Đã khoá</span>':''}<div class="mu">${esc(t.tenDN)} · ${esc(t.tenVaiTro)}</div></div><button class="ghost sm" data-u="${esc(t.tenDN)}" onclick="moTK(this.dataset.u)">Sửa</button></div>`).join('')}
 function moTK(u){TK_SUA=u?TKS.find(t=>t.tenDN===u):null;const t=TK_SUA;
   $('tkTieuDe').textContent=t?'Sửa tài khoản':'Thêm tài khoản';$('tkTen').value=t?t.ten:'';$('tkUser').value=t?t.tenDN:'';$('tkUser').disabled=!!t;
