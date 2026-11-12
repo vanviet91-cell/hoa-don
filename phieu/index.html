@@ -227,7 +227,7 @@ img.xemPhieu{display:block;width:100%;border:1px solid var(--bd);border-radius:8
   <main>
     <div class="card">
       <div class="f"><span>Loại việc</span><div class="chips" id="vfLoai"></div></div>
-      <div class="f"><span>Người làm (chọn 1 hoặc nhiều người, điểm chia đều)</span><div class="chips chkc" id="vfNguoi"></div></div>
+      <div class="f"><span>Người làm (chọn 1 hoặc nhiều người, điểm chia đều)</span><div class="chips chkc"><label class="chip" style="border-style:dashed"><input type="checkbox" id="vfMo" onchange="if(this.checked)document.querySelectorAll('#vfNguoi input').forEach(c=>c.checked=false)"> 📢 Chưa gán, ai rảnh thì nhận</label></div><div class="chips chkc" id="vfNguoi" onchange="if(event.target.checked)$('vfMo').checked=false"></div></div>
       <div class="f chkc"><label class="chip"><input type="checkbox" id="vfKho"> Việc khó / máy to (điểm x<span id="vfHeSo">1,5</span>)</label></div>
       <div class="f"><span>Hẹn lúc</span><input id="vfHen" type="datetime-local"></div>
       <div class="mu hide" id="vfPhieu"></div>
@@ -449,6 +449,10 @@ function thanhNgay(s){const m=String(s||'').match(/^(\d{4})-(\d\d)-(\d\d)[ T](\d
 function ngayViec(v){return String(v.henLuc||v.lucTao||'').slice(0,10)}
 function dsLam(v){return String(v.nguoiLam||'').split(',').map(x=>x.trim()).filter(Boolean)}
 function coLam(v,k){return dsLam(v).indexOf(k)>=0}
+function choMo(v){return !dsLam(v).length&&v.trangThai==='Chờ nhận'}
+function laTho(){const r=vtU();return r.indexOf('kythuat')>=0||r.indexOf('giaovan')>=0}
+function cuaToiV(v){return coLam(v,U.tenDN)||(choMo(v)&&laTho())}
+function tenLam(v){return v.tenNguoiLam||'📢 Chưa gán'}
 const DIEM_MAC_UI={loai:{'Lắp đặt':2,'Sửa tại nhà':3,'Giao hàng':1,'Thu hồi / bảo hành':1.5,'Khác':1},kho:1.5,dungGio:0.5,tre:0.5,treSau:30,xaKm:15,xa:0.5,doKhach:0.5,phanNan:1,donGia:20000};
 function cfgDiem(){const c=(HT&&HT.diem)||{};return Object.assign({},DIEM_MAC_UI,c,{loai:Object.assign({},DIEM_MAC_UI.loai,c.loai||{})})}
 function soD(x){return(Math.round(x*100)/100).toLocaleString('vi-VN')}
@@ -470,7 +474,7 @@ function gioHen(s){const m=String(s||'').match(/^(\d{4})-(\d\d)-(\d\d)T(\d\d):(\
   const nay=homNay(),ng=s.slice(0,10);const d=new Date();d.setDate(d.getDate()+1);const mai=`${d.getFullYear()}-${z2(d.getMonth()+1)}-${z2(d.getDate())}`;
   return`${m[4]}:${m[5]} ${ng===nay?'hôm nay':ng===mai?'ngày mai':m[3]+'/'+m[2]}`}
 function viecLoc(){const nay=homNay(),nv=laQL()?$('vChonNV').value:'';
-  let ds=VIEC.filter(v=>!nv||coLam(v,nv));
+  let ds=VIEC.filter(v=>!nv||(nv==='__mo'?!dsLam(v).length:coLam(v,nv)));
   if(VLOC==='nay')ds=ds.filter(v=>vXong(v)?String(v.lucXong).slice(0,10)===nay&&v.trangThai!=='Đã huỷ':ngayViec(v)<=nay);
   else if(VLOC==='sap')ds=ds.filter(v=>!vXong(v)&&ngayViec(v)>nay);
   else ds=ds.filter(vXong);
@@ -483,7 +487,7 @@ function veViec(){if(!U)return;const nay=homNay(),ql=laQL();
   VIEC.forEach(v=>{if(vXong(v))dem.xong++;else if(ngayViec(v)>nay)dem.sap++;else dem.nay++});
   $('vLoc').innerHTML=[['nay','Hôm nay ('+dem.nay+')'],['sap','Sắp tới ('+dem.sap+')'],['xong','Đã xong']].map(([k,t])=>`<button class="${VLOC===k?'on':''}" onclick="VLOC='${k}';veViec()">${t}</button>`).join('');
   $('vLocNV').classList.toggle('hide',!ql);
-  if(ql){const cu=$('vChonNV').value;$('vChonNV').innerHTML='<option value="">Tất cả nhân viên</option>'+NV.filter(n=>n.lam).map(n=>`<option value="${esc(n.tenDN)}" ${n.tenDN===cu?'selected':''}>${esc(n.ten)}</option>`).join('')}
+  if(ql){const cu=$('vChonNV').value;$('vChonNV').innerHTML='<option value="">Tất cả nhân viên</option><option value="__mo" '+(cu==='__mo'?'selected':'')+'>📢 Đơn chưa gán</option>'+NV.filter(n=>n.lam).map(n=>`<option value="${esc(n.tenDN)}" ${n.tenDN===cu?'selected':''}>${esc(n.ten)}</option>`).join('')}
   const badge=ql?VIEC.filter(treViec).length:VIEC.filter(v=>v.trangThai==='Chờ nhận').length;
   $('vDem').textContent=badge;$('vDem').classList.toggle('hide',!badge);
   veBang();
@@ -492,7 +496,7 @@ function veViec(){if(!U)return;const nay=homNay(),ql=laQL();
     <div class="l1"><span class="gioHen">${gioHen(v.henLuc)}</span><span class="tag t-v">${esc(v.loai)}</span><span class="st ${lopTTV(v.trangThai)}">${esc(v.trangThai)}</span></div>
     <div class="l2">${esc(v.khTen||'Khách')}${v.khSdt?` <span class="mu" style="font-weight:400">· ${esc(v.khSdt)}</span>`:''}</div>
     ${v.diaChi?`<div class="l3">📍 ${esc(v.diaChi)}</div>`:''}${v.noiDung?`<div class="l3">${esc(v.noiDung).slice(0,140)}</div>`:''}
-    <div class="l3">${esc(v.ma)}${ql?' · 👷 <b>'+esc(v.tenNguoiLam)+'</b>':''}${v.thuHo?' · thu '+tien(v.thuHo):''}${v.anh&&v.anh.length?' · 📷 '+v.anh.length:''}${tre?' · <span class="tre">TRỄ HẸN</span>':''}</div></div>`}).join('')
+    <div class="l3">${esc(v.ma)}${ql||choMo(v)?' · 👷 <b>'+esc(tenLam(v))+'</b>':''}${v.thuHo?' · thu '+tien(v.thuHo):''}${v.anh&&v.anh.length?' · 📷 '+v.anh.length:''}${tre?' · <span class="tre">TRỄ HẸN</span>':''}</div></div>`}).join('')
     :`<div class="empty">${VLOC==='nay'?(ql?'Hôm nay chưa có việc nào. Bấm "+ Giao việc" để giao.':'Hôm nay chưa có việc nào giao cho bạn.'):VLOC==='sap'?'Chưa có việc sắp tới.':'Chưa có việc đã xong.'}</div>`}
 function veBang(){const nay=homNay(),b=$('vBang');
   if(VLOC!=='nay'){b.classList.add('hide');return}
@@ -515,6 +519,7 @@ function moVForm(v,p){if(!laQL())return;VFM={id:v?v.id:'',loai:v?v.loai:(p?'Sử
   $('vfTieuDe').textContent=v?'Sửa việc '+v.ma:'Giao việc';
   const lam=NV.filter(n=>n.lam),ds=lam.length?lam:NV;
   $('vfNguoi').innerHTML=ds.map(n=>`<label class="chip"><input type="checkbox" value="${esc(n.tenDN)}" ${v&&coLam(v,n.tenDN)?'checked':''}> ${esc(n.ten)}</label>`).join('');
+  $('vfMo').checked=!!(v&&!dsLam(v).length);
   $('vfKho').checked=!!(v&&+v.heSo>1);$('vfHeSo').textContent=String(cfgDiem().kho).replace('.',',');
   let hen=v?v.henLuc:'';if(!v){const d=new Date(Date.now()+3600000);d.setMinutes(d.getMinutes()<30?30:60,0,0);hen=`${d.getFullYear()}-${z2(d.getMonth()+1)}-${z2(d.getDate())}T${z2(d.getHours())}:${z2(d.getMinutes())}`}
   $('vfHen').value=hen;
@@ -524,17 +529,17 @@ function moVForm(v,p){if(!laQL())return;VFM={id:v?v.id:'',loai:v?v.loai:(p?'Sử
   const pm=v?v.phieuMa:p?p.ma:'';$('vfPhieu').textContent=pm?'Gắn với phiếu '+pm:'';$('vfPhieu').classList.toggle('hide',!pm);
   veVLoai();$('pgVForm').classList.remove('hide');$('pgVForm').scrollTop=0}
 function veVLoai(){$('vfLoai').innerHTML=(HT.loaiViec||['Lắp đặt','Sửa tại nhà','Giao hàng','Thu hồi / bảo hành','Khác']).map(l=>`<button type="button" class="chip ${VFM.loai===l?'on':''}" onclick="VFM.loai='${esc(l)}';veVLoai()">${esc(l)}</button>`).join('')}
-async function guiVForm(){const d={id:VFM.id,loai:VFM.loai,nguoiLam:[...document.querySelectorAll('#vfNguoi input:checked')].map(x=>x.value),kho:$('vfKho').checked,henLuc:$('vfHen').value,khTen:$('vfKhTen').value,khSdt:$('vfKhSdt').value,
+async function guiVForm(){const d={id:VFM.id,loai:VFM.loai,nguoiLam:[...document.querySelectorAll('#vfNguoi input:checked')].map(x=>x.value),kho:$('vfKho').checked,chuaGan:$('vfMo').checked,henLuc:$('vfHen').value,khTen:$('vfKhTen').value,khSdt:$('vfKhSdt').value,
   diaChi:$('vfDiaChi').value,noiDung:$('vfNoiDung').value,thuHo:$('vfThu').value,phieuId:VFM.phieuId};
-  if(!d.nguoiLam.length){toast('Chọn ít nhất 1 người làm');return}if(!d.khTen.trim()&&!d.diaChi.trim()){toast('Nhập tên khách hoặc địa chỉ');return}
-  $('vfLuu').disabled=true;try{const v=await goi('luuViec',TOKEN,d);capNhatV(v);$('pgVForm').classList.add('hide');toast(VFM.id?'Đã lưu':'Đã giao việc '+v.ma+' cho '+v.tenNguoiLam);
+  if(!d.nguoiLam.length&&!d.chuaGan){toast('Chọn người làm, hoặc chọn Chưa gán');return}if(!d.khTen.trim()&&!d.diaChi.trim()){toast('Nhập tên khách hoặc địa chỉ');return}
+  $('vfLuu').disabled=true;try{const v=await goi('luuViec',TOKEN,d);capNhatV(v);$('pgVForm').classList.add('hide');toast(VFM.id?'Đã lưu':v.tenNguoiLam?'Đã giao việc '+v.ma+' cho '+v.tenNguoiLam:'Đã đăng đơn '+v.ma+', báo cho cả đội vào nhận');
     if(VCT&&VCT.id===v.id){VCT=v;veVCT()}}catch(e){baoLoi(e)}finally{$('vfLuu').disabled=false}}
 
 /* chi tiết việc */
 function moVCT(id){VCT=VIEC.find(v=>v.id===id);if(!VCT)return;veVCT();$('pgVCT').classList.remove('hide');$('pgVCT').scrollTop=0}
 function dongVCT(){$('pgVCT').classList.add('hide');VCT=null;veViec()}
 function linkMap(dc){return['https:','','www.google.com','maps','search',''].join('/')+'?api=1&query='+encodeURIComponent(dc)}
-function veVCT(){const v=VCT,xong=vXong(v),ql=laQL(),cuaToi=coLam(v,U.tenDN)||ql;$('vcMa').textContent=v.ma;
+function veVCT(){const v=VCT,xong=vXong(v),ql=laQL(),cuaToi=coLam(v,U.tenDN)||(choMo(v)?laTho():ql);$('vcMa').textContent=v.ma;
   const kv=(k,x)=>x?`<div>${k}</div><div>${x}</div>`:'';
   let h=`<div class="card"><div class="row"><span class="tag t-v">${esc(v.loai)}</span><span class="st ${lopTTV(v.trangThai)}">${esc(v.trangThai)}</span></div>
     <div style="font-size:19px;font-weight:700;margin-top:8px">${gioHen(v.henLuc)}${treViec(v)?' <span class="tre" style="font-size:14px">TRỄ HẸN</span>':''}</div>
@@ -557,7 +562,7 @@ function veVCT(){const v=VCT,xong=vXong(v),ql=laQL(),cuaToi=coLam(v,U.tenDN)||ql
       ${n>1?`<div class="mu">${n} người làm, mỗi người <b>${soD(dv.tong/n)}</b> điểm</div>`:''}
       <div class="dct mu" style="margin-top:6px">${dv.ct.map(([k,x])=>`<div><span>${esc(k)}</span><span>${x>0?'+':''}${soD(x)}</span></div>`).join('')}</div>
       ${ql&&v.trangThai==='Hoàn thành'?`<button class="ghost sm" style="margin-top:8px" onclick="phanNanV(${v.phanNan?0:1})">${v.phanNan?'Bỏ đánh dấu phàn nàn':'⚠️ Khách phàn nàn / phải quay lại'}</button>`:''}</div>`}
-  h+=`<div class="card"><h3>Thời gian</h3><div class="kv">${kv('Giao việc',gio(v.lucTao)+' · '+esc(v.nguoiTao))}${kv('Người làm','<b>'+esc(v.tenNguoiLam)+'</b>')}${kv('Nhận việc',v.lucNhanViec?gio(v.lucNhanViec):'')}${kv('Bắt đầu đi',v.lucDi?gio(v.lucDi):'')}${kv('Đến nơi',v.lucDen?gio(v.lucDen)+(dungGio(v)===false?' <span class="tre">(trễ)</span>':dungGio(v)?' (đúng giờ)':''):'')}${kv('Kết thúc',v.lucXong?gio(v.lucXong):'')}${kv('Phiếu',v.phieuMa?`<a href="#" onclick="event.preventDefault();moPhieuTuViec()">${esc(v.phieuMa)}</a>`:'')}</div></div>`;
+  h+=`<div class="card"><h3>Thời gian</h3><div class="kv">${kv('Giao việc',gio(v.lucTao)+' · '+esc(v.nguoiTao))}${kv('Người làm','<b>'+esc(tenLam(v))+'</b>')}${kv('Nhận việc',v.lucNhanViec?gio(v.lucNhanViec):'')}${kv('Bắt đầu đi',v.lucDi?gio(v.lucDi):'')}${kv('Đến nơi',v.lucDen?gio(v.lucDen)+(dungGio(v)===false?' <span class="tre">(trễ)</span>':dungGio(v)?' (đúng giờ)':''):'')}${kv('Kết thúc',v.lucXong?gio(v.lucXong):'')}${kv('Phiếu',v.phieuMa?`<a href="#" onclick="event.preventDefault();moPhieuTuViec()">${esc(v.phieuMa)}</a>`:'')}</div></div>`;
   if(ql&&v.trangThai==='Đã huỷ')h+=`<div class="card">${v.ketQua?`<div class="mu" style="margin-bottom:8px">Lý do huỷ: ${esc(v.ketQua)}</div>`:''}<button class="btnTo" onclick="keoLaiV()">↩ Kéo lại đơn</button></div>`;
   if(ql&&!xong)h+=`<div class="card acts"><button class="ghost" onclick="moVForm(VCT)">Sửa / giao người khác</button><button class="bad" onclick="huyV()">Huỷ việc</button></div>`;
   h+=`<div class="card"><h3>Lịch sử</h3><div class="tl">${(v.nhatKy||[]).slice().reverse().map(n=>`<div>${esc(n.viec)}<small>${gio(n.luc)} · ${esc(n.ai)}</small></div>`).join('')}</div></div>`;
@@ -568,15 +573,16 @@ async function napAnhV(vid,fid,ky){const o=()=>$('pv_'+fid);
     const sp=e.querySelector('.gd'),x=e.querySelector('.x');e.innerHTML=`<img src="${ANH_CACHE[fid]}" alt="">`;if(sp)e.appendChild(sp);if(x)e.appendChild(x)}
   catch(err){const e=o();if(e&&e.firstChild&&e.firstChild.nodeType===3)e.firstChild.textContent='Lỗi ảnh'}}
 async function moPhieuTuViec(){let p=timTrongMay(VCT.phieuId);if(!p){try{p=await goi('layPhieu',TOKEN,VCT.phieuId);CU=CU.filter(x=>x.id!==p.id);CU.push(p)}catch(e){baoLoi(e);return}}moCT(p.id)}
-async function buocV(b){try{const v=await goi('buocViec',TOKEN,VCT.id,b);VCT=v;capNhatV(v);veVCT();toast({nhan:'Đã nhận việc',di:'Đã ghi giờ đi',den:'Đã ghi giờ đến'}[b])}catch(e){baoLoi(e)}}
+async function buocV(b){try{const v=await goi('buocViec',TOKEN,VCT.id,b);VCT=v;capNhatV(v);veVCT();toast({nhan:'Đã nhận việc',di:'Đã ghi giờ đi',den:'Đã ghi giờ đến'}[b])}catch(e){baoLoi(e);taiLaiViec()}}
+async function taiLaiViec(){try{const r=await goi('dsViec',TOKEN);VIEC=r.viec;if(r.nv&&r.nv.length)NV=r.nv;luuCache();if(VCT){const x=VIEC.find(y=>y.id===VCT.id);if(x){VCT=x;veVCT()}else dongVCT()}veViec()}catch(e){}}
 async function chonAnhV(inp){const fs=[...inp.files].map(f=>({file:f,luc:new Date()}));inp.value='';if(!fs.length||!VCT)return;let v=VCT,n=0;
   for(const a of fs){n++;toast(`Đang tải ảnh ${n}/${fs.length}...`,60000);
     try{const url=await dongDau(a.file,`${v.ma} · ${v.loai} · ${v.khTen||''}`.slice(0,90),`${nhanGio(a.luc)} · ${U.ten}`);
       v=await goi('taiAnhViec',TOKEN,v.id,url,nhanGio(a.luc))}catch(e){toast('Ảnh '+n+' lỗi: '+e.message,5000);await new Promise(r=>setTimeout(r,1500))}}
   toast('Đã tải xong ảnh');capNhatV(v);if(VCT&&VCT.id===v.id){VCT=v;veVCT()}}
 async function xoaAnhV(fid){if(!confirm('Xoá ảnh này?'))return;try{const v=await goi('xoaAnhViec',TOKEN,VCT.id,fid);delete ANH_CACHE[fid];VCT=v;capNhatV(v);veVCT()}catch(e){baoLoi(e)}}
-async function keoLaiV(){if(!confirm('Kéo lại việc '+VCT.ma+' giao cho '+VCT.tenNguoiLam+'?'))return;
-  try{const v=await goi('keoLaiViec',TOKEN,VCT.id);VCT=v;capNhatV(v);veVCT();toast(treViec(v)?'Đã kéo lại. Giờ hẹn đã qua, bấm Sửa để hẹn lại':'Đã kéo lại đơn, chờ '+v.tenNguoiLam+' nhận',4000)}catch(e){baoLoi(e)}}
+async function keoLaiV(){if(!confirm('Kéo lại việc '+VCT.ma+' giao cho '+tenLam(VCT)+'?'))return;
+  try{const v=await goi('keoLaiViec',TOKEN,VCT.id);VCT=v;capNhatV(v);veVCT();toast(treViec(v)?'Đã kéo lại. Giờ hẹn đã qua, bấm Sửa để hẹn lại':'Đã kéo lại đơn, chờ '+(v.tenNguoiLam||'cả đội')+' nhận',4000)}catch(e){baoLoi(e)}}
 async function phanNanV(co){if(co&&!confirm('Đánh dấu khách phàn nàn? Việc này bị trừ điểm.'))return;try{const v=await goi('phanNanViec',TOKEN,VCT.id,!!co);VCT=v;capNhatV(v);veVCT()}catch(e){baoLoi(e)}}
 async function huyV(){const l=prompt('Lý do huỷ việc '+VCT.ma+'?');if(l===null)return;try{const v=await goi('huyViec',TOKEN,VCT.id,l);VCT=v;capNhatV(v);veVCT();toast('Đã huỷ việc')}catch(e){baoLoi(e)}}
 
@@ -857,17 +863,17 @@ setInterval(()=>{if(!document.hidden&&TOKEN&&U)kiemNhac()},60000);
 function gioHenV(v){return v.henLuc?new Date(v.henLuc.replace(/-/g,'/').replace('T',' ')+':00').getTime():0}
 function treChuaNhan(){const now=Date.now();return VIEC.filter(v=>v.trangThai==='Chờ nhận'&&gioHenV(v)&&gioHenV(v)<=now)}
 function kiemNhac(){if(!U||$('scApp').classList.contains('hide')||$('dlgNhac').open)return;
-  const tre=treChuaNhan(),cua=tre.filter(v=>coLam(v,U.tenDN)),khac=laQL()?tre.filter(v=>!coLam(v,U.tenDN)):[];
+  const tre=treChuaNhan(),cua=tre.filter(cuaToiV),khac=laQL()?tre.filter(v=>!cuaToiV(v)):[];
   const moi=cua.concat(khac).filter(v=>!DA_NHAC.has(v.id+v.nguoiLam));if(!moi.length)return;
   moi.forEach(v=>DA_NHAC.add(v.id+v.nguoiLam));
   const dong=v=>{const p=Math.round((Date.now()-gioHenV(v))/60000);return`<div class="card" style="margin:8px 0;padding:10px"><div class="row"><b class="sp">${esc(v.ma)} · ${esc(v.loai)}</b><span style="color:var(--bad);font-weight:700">${p>1?'quá '+p+' phút':'tới giờ'}</span></div>
     <div class="mu" style="margin:4px 0">${esc([v.khTen,v.diaChi].filter(Boolean).join(' · '))} · hẹn ${gio(v.henLuc.replace('T',' '))}</div>
-    ${coLam(v,U.tenDN)?`<button style="width:100%" onclick="nhanTuNhac('${esc(v.id)}')">✅ Nhận việc</button>`:`<div class="row"><span class="sp">Người làm: <b>${esc(v.tenNguoiLam)}</b></span><button class="ghost sm" onclick="$('dlgNhac').close();moTab('viec');moVCT('${esc(v.id)}')">Xem</button></div>`}</div>`};
+    ${cuaToiV(v)?`${choMo(v)?'<div class="mu" style="margin-bottom:6px">📢 Đơn chưa gán, ai nhận trước thì làm</div>':''}<button style="width:100%" onclick="nhanTuNhac('${esc(v.id)}')">✅ Nhận việc</button>`:`<div class="row"><span class="sp">Người làm: <b>${esc(tenLam(v))}</b></span><button class="ghost sm" onclick="$('dlgNhac').close();moTab('viec');moVCT('${esc(v.id)}')">Xem</button></div>`}</div>`};
   $('nhTieuDe').textContent=cua.length?'⏰ Tới giờ, anh/chị chưa nhận việc':'⚠️ Có việc tới giờ chưa ai nhận';
   $('nhND').innerHTML=moi.map(dong).join('');$('dlgNhac').showModal();
   try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}}
 async function nhanTuNhac(id){try{const v=await goi('buocViec',TOKEN,id,'nhan');capNhatV(v);toast('Đã nhận việc '+v.ma);
-  $('dlgNhac').close();moTab('viec');moVCT(v.id);setTimeout(kiemNhac,500)}catch(e){baoLoi(e)}}
+  $('dlgNhac').close();moTab('viec');moVCT(v.id);setTimeout(kiemNhac,500)}catch(e){baoLoi(e);taiLaiViec()}}
 function moTuLink(){const id=new URLSearchParams(location.search).get('viec');if(!id)return;history.replaceState(null,'',location.pathname);
   if(VIEC.some(v=>v.id===id)){moTab('viec');moVCT(id)}}
 
