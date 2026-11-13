@@ -10,6 +10,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-180.png">
 <title>Viết hoá đơn - Cường Tư</title>
+<style id="cssIn"></style>
 <style>
 :root{--bg:#f3f4f6;--card:#fff;--tx:#111827;--mu:#6b7280;--ac:#0f766e;--bd:#e5e7eb}
 *{box-sizing:border-box}
@@ -49,6 +50,9 @@ input:focus,textarea:focus{outline:2px solid #99f6e4;border-color:var(--ac)}
 dialog{border:0;border-radius:14px;max-width:560px;width:94%;padding:16px}
 dialog::backdrop{background:#0006}
 .imgs{display:flex;gap:16px;margin-top:6px}.imgs img{height:70px;border:1px solid var(--bd);border-radius:6px}
+textarea.ten{resize:none;overflow:hidden;min-height:40px}
+#inVung{display:none}
+@media print{body>*:not(#inVung){display:none!important}#inVung{display:block!important}#inVung img{width:100%;height:auto;display:block}}
 #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 16px;border-radius:10px;display:none;z-index:20}
 </style>
 </head>
@@ -61,6 +65,7 @@ dialog::backdrop{background:#0006}
     <div><label>Số hoá đơn</label><input id="soHD" type="number" min="1"></div>
     <div><label>Ngày bán</label><input id="ngay" type="date"></div>
    </div>
+   <label>Ghi chú trên hoá đơn (không bắt buộc, Enter để xuống dòng)</label><textarea id="ghiChu" rows="2" placeholder="Vd: Giao hàng thứ 7, bảo hành 24 tháng, tặng kèm nước lau..."></textarea>
   </div>
   <div class="card"><h2>Khách hàng</h2>
    <label>Họ tên</label><input id="khTen" placeholder="Nguyễn Văn A">
@@ -80,6 +85,7 @@ dialog::backdrop{background:#0006}
    <div class="fmt">Định dạng ảnh: <span class="seg"><button type="button" data-f="png">PNG</button><button type="button" data-f="jpeg">JPEG</button></span></div>
    <button class="btn pri" id="btnSave">Lưu ảnh</button>
    <button class="btn pri" id="btnShare">Gửi / chia sẻ ảnh</button>
+   <button class="btn pri" id="btnPrint">🖨 In hoá đơn</button>
    <button class="btn sec" id="btnNew">Hoá đơn mới</button>
   </div>
  </div>
@@ -104,6 +110,22 @@ dialog::backdrop{background:#0006}
  <p class="hint" id="scanMsg">Đưa mã QR hoặc mã vạch IMEI vào giữa khung.</p>
  <div class="actions"><button class="btn sec" id="scanClose" style="width:100%">Đóng</button></div>
 </dialog>
+<dialog id="dlgIn">
+ <h3 style="margin-top:0">In hoá đơn</h3>
+ <label>Khổ giấy</label>
+ <div class="fmt"><span class="seg" id="khoIn"><button type="button" data-k="A4">A4</button><button type="button" data-k="A5">A5</button></span></div>
+ <p class="hint">Bấm In, hộp in của máy sẽ hiện ra để chọn máy in:<br>
+ • <b>Điện thoại (iPhone)</b>: chọn máy in Wifi (AirPrint) cùng mạng Wifi với điện thoại.<br>
+ • <b>Điện thoại Android</b>: chọn máy in Wifi; nếu chưa thấy, cài app/plugin in của hãng máy in (HP, Canon, Brother...).<br>
+ • <b>Máy tính</b>: chọn máy in LAN hoặc USB đã cài trên máy, đặt khổ giấy giống ô trên.</p>
+ <div class="actions"><button class="btn pri" id="inOk">In</button><button class="btn sec" id="inAnh">Không in được? Mở ảnh để in</button><button class="btn sec" id="inClose">Đóng</button></div>
+</dialog>
+<dialog id="dlgAnh" style="max-width:720px">
+ <p class="hint" style="margin-top:0">Nhấn giữ ảnh &gt; Chia sẻ &gt; In (iPhone), hoặc chuột phải &gt; In / Lưu ảnh (máy tính).</p>
+ <img id="anhIn" style="width:100%;border:1px solid #e5e7eb;border-radius:6px">
+ <div class="actions" style="margin-top:10px"><button class="btn sec" id="anhClose" style="width:100%">Đóng</button></div>
+</dialog>
+<div id="inVung"><img id="inImg" alt=""></div>
 <div id="toast"></div>
 
 <script>
@@ -139,21 +161,21 @@ function docSo(n){n=Math.round(n);if(n===0)return"Không đồng";const cs=["kh�
 
 function renderItems(){const box=$("items");box.innerHTML="";items.forEach((it,i)=>{const d=document.createElement("div");d.className="item";
  d.innerHTML=`<button class="del" title="Xoá">×</button><label style="margin-top:0">Mặt hàng ${i+1}</label>
- <input class="ten" placeholder="Tên hàng hoá, model, serial..." value="${(it.ten||"").replace(/"/g,"&quot;")}">
+ <textarea class="ten" rows="1" placeholder="Tên hàng hoá, model... (Enter để xuống dòng)"></textarea>
  <div class="g"><div><label>SL</label><input class="sl" type="number" min="0" value="${it.sl}"></div>
  <div><label>Đơn giá</label><input class="gia" inputmode="numeric" value="${it.giaS||""}"></div>
  <div><label>Chiết khấu</label><input class="ck" value="${it.ck||""}"></div></div>
  <label>IMEI / Serial</label><div class="imei"><input class="im" autocapitalize="characters" autocomplete="off" placeholder="Quét hoặc gõ, không có thì để trống" value="${(it.imei||"").replace(/"/g,"&quot;")}"><button class="qs" type="button">Quét</button></div>
  <div class="sum"></div>`;
  d.querySelector(".del").onclick=()=>{items.splice(i,1);if(!items.length)items.push(blank());renderItems();update()};
- d.querySelector(".ten").oninput=e=>{it.ten=e.target.value;update()};
+ const tn=d.querySelector(".ten");tn.value=it.ten||"";const cao=()=>{tn.style.height="auto";tn.style.height=tn.scrollHeight+2+"px"};tn.oninput=e=>{it.ten=e.target.value;cao();update()};
  d.querySelector(".sl").oninput=e=>{it.sl=e.target.value;update()};
  const g=d.querySelector(".gia");g.oninput=e=>{const v=num(e.target.value);it.giaS=v?fmt(v):"";e.target.value=it.giaS;update()};
  d.querySelector(".ck").oninput=e=>{it.ck=e.target.value;update()};
  const im=d.querySelector(".im");im.oninput=e=>{it.imei=e.target.value;update()};
  d.querySelector(".qs").onclick=()=>openScan(code=>{const cur=(it.imei||"").trim();
   it.imei=cur&&Number(it.sl)>1&&!cur.split(/\s*,\s*/).includes(code)?cur+", "+code:code;im.value=it.imei;update()});
- box.appendChild(d)});}
+ box.appendChild(d);cao()});}
 const blank=()=>({ten:"",sl:1,giaS:"",ck:"",imei:""});
 
 function update(){const t=calc();document.querySelectorAll("#items .item").forEach((d,i)=>{const it=items[i];
@@ -177,7 +199,7 @@ async function openScan(cb){onCode=cb;$("scanMsg").textContent="Đưa mã QR ho�
 async function closeScan(){onCode=null;if(qr){try{if(qr.isScanning)await qr.stop();qr.clear()}catch(e){}qr=null}if($("scan").open)$("scan").close()}
 $("scanClose").onclick=closeScan;$("scan").addEventListener("cancel",e=>{e.preventDefault();closeScan()});
 
-function saveDraft(){localStorage.setItem("hd_draft",JSON.stringify({soHD:$("soHD").value,ngay:$("ngay").value,khTen:$("khTen").value,khSdt:$("khSdt").value,khDc:$("khDc").value,daTT:$("daTT").value,items}))}
+function saveDraft(){localStorage.setItem("hd_draft",JSON.stringify({soHD:$("soHD").value,ngay:$("ngay").value,khTen:$("khTen").value,khSdt:$("khSdt").value,khDc:$("khDc").value,daTT:$("daTT").value,ghiChu:$("ghiChu").value,items}))}
 
 // ---------- vẽ ảnh ----------
 const W=1240,M=80,FF="Arial,Helvetica,sans-serif";
@@ -187,11 +209,12 @@ function draw(t){t=t||calc();const cv=$("cv"),ctx=cv.getContext("2d");
  const cols=[{h:"STT",w:66,a:"center"},{h:"Tên hàng hóa",w:0,a:"left"},{h:"SL",w:56,a:"center"},{h:"Đơn giá",w:156,a:"right"},{h:"Chiết\nkhấu",w:124,a:"right"},{h:"Giá sau\nCK",w:156,a:"right"},{h:"Thành tiền",w:170,a:"right"}];
  const tw=W-2*M;cols[1].w=tw-cols.reduce((s,c)=>s+c.w,0);
  // tính chiều cao trước
- ctx.font=`26px ${FF}`;const rows=items.map(it=>{const l=it.ten?wrap(ctx,it.ten,cols[1].w-20):[];const m=String(it.imei||"").trim();if(m)l.push(...wrap(ctx,"IMEI: "+m,cols[1].w-20));return l.length?l:[""]});
+ ctx.font=`26px ${FF}`;const rows=items.map(it=>{const l=it.ten?String(it.ten).split("\n").flatMap(p=>wrap(ctx,p,cols[1].w-20)):[];const m=String(it.imei||"").trim();if(m)l.push(...wrap(ctx,"IMEI: "+m,cols[1].w-20));return l.length?l:[""]});
  const rowH=rows.map(l=>Math.max(64,l.length*32+28));
  const noteLines=[];ctx.font=`26px ${FF}`;store.note.split("\n").filter(s=>s.trim()).forEach((n,i)=>{wrap(ctx,n,tw-90).forEach((l,j)=>noteLines.push({l,first:j===0,i}))});
+ const gcLines=[];ctx.font=`26px ${FF}`;String($("ghiChu").value||"").split("\n").filter(x=>x.trim()).forEach(p=>gcLines.push(...wrap(ctx,p,tw-20)));
  const tableTop=640;const tableEnd=tableTop+90+rowH.reduce((a,b)=>a+b,0);
- const H=tableEnd+40+5*42+60+50+noteLines.length*36+60+150;
+ const H=tableEnd+40+5*42+60+50+noteLines.length*36+60+150+(gcLines.length?gcLines.length*36+56:0);
  cv.width=W;cv.height=H;ctx.fillStyle="#fff";ctx.fillRect(0,0,W,H);ctx.fillStyle="#000";ctx.textBaseline="alphabetic";
  // header
  if(imgs.logo){const h=190,w=imgs.logo.width*h/imgs.logo.height;ctx.drawImage(imgs.logo,M,90,Math.min(w,230),h)}
@@ -223,6 +246,7 @@ function draw(t){t=t||calc();const cv=$("cv"),ctx=cv.getContext("2d");
  yy+=60;const lx=W-M-300,vx=W-M;const tl=[["Tổng tiền hàng:",t.tong],["Chiết khấu:",t.ck],["Tổng cộng:",t.tc],["Đã thanh toán:",t.da],["Cần thanh toán khi giao nhận hàng:",t.con]];
  tl.forEach(([k,v],i)=>{const last=i===tl.length-1;ctx.textAlign="right";ctx.font=`${last||i===2?"bold ":""}26px ${FF}`;ctx.fillText(k,lx,yy);ctx.font=`bold ${last?30:26}px ${FF}`;ctx.fillText(fmt(v),vx,yy);yy+=42});
  ctx.textAlign="left";ctx.font=`italic 25px ${FF}`;ctx.fillText("Bằng chữ: "+docSo(Math.max(t.con,0)),M,yy+6,tw);yy+=60;
+ if(gcLines.length){ctx.font=`bold 26px ${FF}`;ctx.fillText("Ghi chú hoá đơn:",M,yy);yy+=38;ctx.font=`26px ${FF}`;gcLines.forEach(l=>{ctx.fillText(l,M+20,yy);yy+=36});yy+=18}
  // ghi chú
  ctx.font=`26px ${FF}`;ctx.fillText("Ghi chú:",M,yy);yy+=46;
  noteLines.forEach(n=>{if(n.first){ctx.textAlign="right";ctx.fillText((n.i+1)+".",M+70,yy);ctx.textAlign="left"}ctx.fillText(n.l,M+84,yy);yy+=36});
@@ -245,9 +269,17 @@ $("btnShare").onclick=async()=>{draw();const b=await blob();const f=new File([b]
  if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],title:"Hoá đơn"});bumpNo()}catch(e){}}
  else if(navigator.clipboard&&window.ClipboardItem){try{await navigator.clipboard.write([new ClipboardItem({"image/png":imgFmt==="png"?b:await blob("image/png")})]);bumpNo();toast("Đã chép ảnh, dán (Cmd+V) vào Zalo là gửi được")}catch(e){$("btnSave").click()}}
  else $("btnSave").click()};
-$("btnNew").onclick=()=>{if(!confirm("Xoá form để viết hoá đơn mới?"))return;bumpNo();["khTen","khSdt","khDc","daTT"].forEach(k=>$(k).value="");
+let khoIn=localStorage.getItem("hd_kho")==="A5"?"A5":"A4";
+function showKho(){document.querySelectorAll("#khoIn button").forEach(b=>b.classList.toggle("on",b.dataset.k===khoIn))}
+document.querySelectorAll("#khoIn button").forEach(b=>b.onclick=()=>{khoIn=b.dataset.k;localStorage.setItem("hd_kho",khoIn);showKho()});
+$("btnPrint").onclick=()=>{showKho();$("dlgIn").showModal()};
+$("inClose").onclick=()=>$("dlgIn").close();$("anhClose").onclick=()=>$("dlgAnh").close();
+$("inAnh").onclick=()=>{draw();$("anhIn").src=$("cv").toDataURL("image/png");$("dlgIn").close();$("dlgAnh").showModal()};
+$("inOk").onclick=()=>{draw();$("cssIn").textContent="@page{size:"+khoIn+" portrait;margin:"+(khoIn==="A5"?"6mm":"10mm")+"}@media print{#inVung img{width:auto!important;max-width:100%;max-height:"+(khoIn==="A5"?"196mm":"275mm")+";margin:0 auto}}";
+ const im=$("inImg");im.onload=()=>{$("dlgIn").close();bumpNo();setTimeout(()=>window.print(),200)};im.src=$("cv").toDataURL("image/png")};
+$("btnNew").onclick=()=>{if(!confirm("Xoá form để viết hoá đơn mới?"))return;bumpNo();["khTen","khSdt","khDc","daTT","ghiChu"].forEach(k=>$(k).value="");
  items=[blank()];$("soHD").value=Number(localStorage.getItem("hd_last")||0)+1;$("ngay").value=today();renderItems();update()};
-["soHD","ngay","khTen","khSdt","khDc"].forEach(k=>$(k).oninput=update);
+["soHD","ngay","khTen","khSdt","khDc","ghiChu"].forEach(k=>$(k).oninput=update);
 $("daTT").oninput=e=>{const v=num(e.target.value);e.target.value=v?fmt(v):"";update()};
 $("addItem").onclick=()=>{items.push(blank());renderItems();update()};
 // cài đặt
@@ -263,7 +295,7 @@ $("sOk").onclick=async()=>{Object.assign(store,{ten:$("sTen").value,info:$("sInf
 const today=()=>{const d=new Date();return new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
 (async()=>{await loadImg("logo",store.logo);await loadImg("qr",store.qr);
  const dr=JSON.parse(localStorage.getItem("hd_draft")||"null");
- if(dr){["soHD","ngay","khTen","khSdt","khDc","daTT"].forEach(k=>$(k).value=dr[k]||"");items=dr.items&&dr.items.length?dr.items:[blank()]}
+ if(dr){["soHD","ngay","khTen","khSdt","khDc","daTT","ghiChu"].forEach(k=>$(k).value=dr[k]||"");items=dr.items&&dr.items.length?dr.items:[blank()]}
  else{items=[blank()];$("soHD").value=Number(localStorage.getItem("hd_last")||0)+1;$("ngay").value=today()}
  renderItems();update()})();
 </script>
