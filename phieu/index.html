@@ -720,7 +720,7 @@ async function luuThangDiemUI(){const c={loai:{}};document.querySelectorAll('#td
 /* ---------- DANH SÁCH ---------- */
 const NHOM_LOC=[['dang','Đang xử lý'],['xong','Chờ trả'],['tra','Đã trả'],['tat','Tất cả']];
 function nhomTT(t){if(t==='Đã trả khách')return'tra';if(t==='Đã sửa xong'||t==='Không sửa được')return'xong';return'dang'}
-function lopTT(t){return{'Đã tiếp nhận':'st0','Đang kiểm tra':'st1','Đang sửa':'st1','Gửi hãng':'st1','Chờ linh kiện':'st1','Đã sửa xong':'st2','Không sửa được':'st4','Đã trả khách':'st3'}[t]||'st0'}
+function lopTT(t){return{'Đã tiếp nhận':'st0','Đang kiểm tra':'st1','Đang sửa':'st1','Đã báo tổng đài hãng':'st1','Gửi hãng':'st1','Chờ linh kiện':'st1','Đã sửa xong':'st2','Không sửa được':'st4','Đã trả khách':'st3'}[t]||'st0'}
 function boDau(s){return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/đ/g,'d').replace(/Đ/g,'D').toLowerCase()}
 function timTrongMay(id){return DS.find(p=>p.id===id)||CU.find(p=>p.id===id)}
 function thePhieu(p){return`<div class="pc" onclick="moCT('${esc(p.id)}')">
