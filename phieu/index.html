@@ -555,6 +555,7 @@ function cfgDiem(){const c=(HT&&HT.diem)||{};return Object.assign({},DIEM_MAC_UI
 function soD(x){return(Math.round(x*100)/100).toLocaleString('vi-VN')}
 /* điểm cả việc (chia đều cho số người làm). Trả {tong, ct:[[lý do, điểm]]} */
 function diemViec(v){const c=cfgDiem(),ct=[];if(v.trangThai!=='Hoàn thành'&&v.trangThai!=='Không làm được')return{tong:0,ct};
+  if(v.khongDiem){ct.push(['Làm lại đơn '+(v.lamLaiCua||'')+' (lỗi lần trước), không tính điểm',0]);return{tong:0,ct}}
   let goc=+(c.loai[v.loai]!=null?c.loai[v.loai]:1);ct.push([v.loai,goc]);
   if(+v.heSo>1){const th=goc*(c.kho-1);ct.push(['Việc khó x'+soD(c.kho),th]);goc+=th}
   if(v.trangThai==='Không làm được'){if(v.lyDoKL==='tho'){ct.push(['Không làm được do thợ',-goc]);return{tong:0,ct}}
@@ -641,7 +642,9 @@ function veVCT(){const v=VCT,xong=vXong(v),ql=laQL(),cuaToi=coLam(v,U.tenDN)||(c
   let h=`<div class="card"><div class="row"><span class="tag t-v">${esc(v.loai)}</span><span class="st ${lopTTV(v.trangThai)}">${esc(v.trangThai)}</span></div>
     <div style="font-size:19px;font-weight:700;margin-top:8px">${gioHen(v.henLuc)}${treViec(v)?' <span class="tre" style="font-size:14px">TRỄ HẸN</span>':''}</div>
     ${v.noiDung?`<div style="margin-top:6px">${esc(v.noiDung).replace(/\n/g,'<br>')}</div>`:''}
-    ${v.thuHo?`<div style="margin-top:6px">Cần thu của khách: <b>${tien(v.thuHo)}</b></div>`:''}</div>`;
+    ${v.thuHo?`<div style="margin-top:6px">Cần thu của khách: <b>${tien(v.thuHo)}</b></div>`:''}
+    ${v.lamLaiCua?`<div class="tre" style="margin-top:6px">↩ Làm lại của đơn <a href="#" onclick="denMaV('${esc(v.lamLaiCua)}');return false">${esc(v.lamLaiCua)}</a>${v.khongDiem?' · không tính điểm':''}</div>`:''}
+    ${v.lamLai?`<div class="tre" style="margin-top:6px">↩ Đơn này chưa đạt, đã kéo lại thành đơn <a href="#" onclick="denMaV('${esc(v.lamLai)}');return false">${esc(v.lamLai)}</a></div>`:''}</div>`;
   h+=`<div class="card"><h3>Khách hàng</h3><div class="kv">${kv('Tên',esc(v.khTen))}${kv('SĐT',esc(v.khSdt))}${kv('Địa chỉ',esc(v.diaChi))}</div>
     <div class="row" style="margin-top:10px">${v.khSdt?`<a class="sp" href="tel:${esc(v.khSdt.replace(/[^\d+]/g,''))}" style="text-decoration:none"><button type="button" class="ghost" style="width:100%">📞 Gọi khách</button></a>`:''}
     ${v.diaChi?`<a class="sp" href="${esc(linkMap(v.diaChi))}" target="_blank" style="text-decoration:none"><button type="button" class="ghost" style="width:100%">🗺 Chỉ đường</button></a>`:''}</div></div>`;
@@ -660,6 +663,7 @@ function veVCT(){const v=VCT,xong=vXong(v),ql=laQL(),cuaToi=coLam(v,U.tenDN)||(c
       <div class="dct mu" style="margin-top:6px">${dv.ct.map(([k,x])=>`<div><span>${esc(k)}</span><span>${x>0?'+':''}${soD(x)}</span></div>`).join('')}</div>
       ${ql&&v.trangThai==='Hoàn thành'?`<button class="ghost sm" style="margin-top:8px" onclick="phanNanV(${v.phanNan?0:1})">${v.phanNan?'Bỏ đánh dấu phàn nàn':'⚠️ Khách phàn nàn / phải quay lại'}</button>`:''}</div>`}
   h+=`<div class="card"><h3>Thời gian</h3><div class="kv">${kv('Giao việc',gio(v.lucTao)+' · '+esc(v.nguoiTao))}${kv('Người làm','<b>'+esc(tenLam(v))+'</b>')}${kv('Nhận việc',v.lucNhanViec?gio(v.lucNhanViec):'')}${kv('Bắt đầu đi',v.lucDi?gio(v.lucDi):'')}${kv('Đến nơi',v.lucDen?gio(v.lucDen)+(dungGio(v)===false?' <span class="tre">(trễ)</span>':dungGio(v)?' (đúng giờ)':''):'')}${kv('Kết thúc',v.lucXong?gio(v.lucXong):'')}${kv('Phiếu',v.phieuMa?`<a href="#" onclick="event.preventDefault();moPhieuTuViec()">${esc(v.phieuMa)}</a>`:'')}</div></div>`;
+  if(ql&&(v.trangThai==='Hoàn thành'||v.trangThai==='Không làm được')&&!v.lamLai)h+=`<div class="card"><button class="btnTo" onclick="lamLaiV()">↩ Kéo lại đơn (chưa đạt, phải làm lại)</button><div class="mu" style="margin-top:6px">Tạo đơn làm lại giao cùng người, đơn cũ giữ nguyên tiền đã thu và ảnh.${v.trangThai==='Hoàn thành'?' Đơn cũ bị trừ điểm phàn nàn, đơn làm lại không tính điểm.':''}</div></div>`;
   if(ql&&v.trangThai==='Đã huỷ')h+=`<div class="card">${v.ketQua?`<div class="mu" style="margin-bottom:8px">Lý do huỷ: ${esc(v.ketQua)}</div>`:''}<button class="btnTo" onclick="keoLaiV()">↩ Kéo lại đơn</button></div>`;
   if(ql&&!xong)h+=`<div class="card acts"><button class="ghost" onclick="moVForm(VCT)">Sửa / giao người khác</button><button class="bad" onclick="huyV()">Huỷ việc</button></div>`;
   h+=`<div class="card"><h3>Lịch sử</h3><div class="tl">${(v.nhatKy||[]).slice().reverse().map(n=>`<div>${esc(n.viec)}<small>${gio(n.luc)} · ${esc(n.ai)}</small></div>`).join('')}</div></div>`;
@@ -680,6 +684,9 @@ async function chonAnhV(inp){const fs=[...inp.files].map(f=>({file:f,luc:new Dat
 async function xoaAnhV(fid){if(!confirm('Xoá ảnh này?'))return;try{const v=await goi('xoaAnhViec',TOKEN,VCT.id,fid);delete ANH_CACHE[fid];VCT=v;capNhatV(v);veVCT()}catch(e){baoLoi(e)}}
 async function keoLaiV(){if(!confirm('Kéo lại việc '+VCT.ma+' giao cho '+tenLam(VCT)+'?'))return;
   try{const v=await goi('keoLaiViec',TOKEN,VCT.id);VCT=v;capNhatV(v);veVCT();toast(treViec(v)?'Đã kéo lại. Giờ hẹn đã qua, bấm Sửa để hẹn lại':'Đã kéo lại đơn, chờ '+(v.tenNguoiLam||'cả đội')+' nhận',4000)}catch(e){baoLoi(e)}}
+async function lamLaiV(){const ly=prompt('Kéo lại đơn '+VCT.ma+' để làm lại.\nLý do (máy vẫn lỗi gì, khách báo gì):','');if(ly===null)return;
+  try{const r=await goi('lamLaiViec',TOKEN,VCT.id,ly);capNhatV(r.cu);capNhatV(r.moi);moVCT(r.moi.id);toast('Đã tạo đơn làm lại '+r.moi.ma+(r.moi.tenNguoiLam?', giao '+r.moi.tenNguoiLam:', chưa gán')+'. Bấm Sửa để hẹn giờ',5000)}catch(e){baoLoi(e)}}
+function denMaV(ma){const v=VIEC.find(x=>x.ma===ma);if(v)moVCT(v.id);else toast('Đơn '+ma+' không còn trong máy')}
 async function phanNanV(co){if(co&&!confirm('Đánh dấu khách phàn nàn? Việc này bị trừ điểm.'))return;try{const v=await goi('phanNanViec',TOKEN,VCT.id,!!co);VCT=v;capNhatV(v);veVCT()}catch(e){baoLoi(e)}}
 async function huyV(){const l=prompt('Lý do huỷ việc '+VCT.ma+'?');if(l===null)return;try{const v=await goi('huyViec',TOKEN,VCT.id,l);VCT=v;capNhatV(v);veVCT();toast('Đã huỷ việc')}catch(e){baoLoi(e)}}
 
@@ -858,7 +865,7 @@ function veCT(){const p=CT,tra=p.trangThai==='Đã trả khách';$('ctMa').textC
   const o1=a=>`<div class="ph" id="ph_${esc(a.id)}" onclick="phongTo('${esc(a.id)}')">Đang tải...<span class="gd">${GD[a.gd]||''} ${esc((a.chup||gio(a.luc)).slice(0,5))}</span>${coXoaAnh(a)?`<button class="x" onclick="event.stopPropagation();xoaAnhCT('${esc(a.id)}')">×</button>`:''}</div>`;
   const kv=(k,v)=>v?`<div>${k}</div><div>${v}</div>`:'';
   let h=`<div class="card"><div class="row"><span class="tag ${p.loai==='Bảo hành'?'t-bh':'t-sc'}">${esc(p.loai)}</span><span class="st ${lopTT(p.trangThai)}">${esc(p.trangThai)}</span></div>
-    <div style="font-size:19px;font-weight:700;margin-top:8px">${esc(p.sanPham)}</div>${p.nhomSP?`<div class="mu">${esc(p.nhomSP)}</div>`:''}${p.imei?`<div class="mu">IMEI/Serial: <b>${esc(p.imei)}</b></div>`:''}</div>`;
+    <div style="font-size:19px;font-weight:700;margin-top:8px">${esc(p.sanPham)}</div>${+p.soLanLai?`<div class="tre">↩ Kéo lại sửa lần ${esc(p.soLanLai)}</div>`:''}${p.nhomSP?`<div class="mu">${esc(p.nhomSP)}</div>`:''}${p.imei?`<div class="mu">IMEI/Serial: <b>${esc(p.imei)}</b></div>`:''}</div>`;
   h+=`<div class="card"><h3>Khách hàng</h3><div class="kv">${kv('Tên',esc(p.khTen))}${kv('SĐT',p.khSdt?`<a href="tel:${esc(p.khSdt)}">${esc(p.khSdt)}</a>`:'')}${kv('Địa chỉ',esc(p.khDiaChi))}</div></div>`;
   h+=`<div class="card"><h3>Tiếp nhận</h3><div class="kv">${kv('Người nhận',esc(p.nguoiNhan))}${kv('Lúc nhận','<b>'+gio(p.lucNhan)+'</b>')}${kv('Lỗi khách báo',esc(p.loi).replace(/\n/g,'<br>'))}${kv('Tình trạng',esc(p.tinhTrang).replace(/\n/g,'<br>'))}${kv('Phụ kiện',(p.phuKien||[]).map(esc).join(', ')||'Không có')}${kv('Hẹn trả',ngay(p.henTra))}${kv('Chi phí DK',p.chiPhiDK?tien(p.chiPhiDK):'')}${kv('Ghi chú',esc(p.ghiChu).replace(/\n/g,'<br>'))}</div>
     ${anhTT.length?`<div class="mu" style="margin-top:10px">Ảnh tình trạng khi nhận (${anhTT.length})</div><div class="grid" style="margin-top:6px">${anhTT.map(o1).join('')}</div>`:''}
@@ -874,7 +881,7 @@ function veCT(){const p=CT,tra=p.trangThai==='Đã trả khách';$('ctMa').textC
   if(!tra){acts.push(`<button onclick="moTT()">Cập nhật tình trạng</button>`);
     if(coQuyen('tra'))acts.push(`<button class="ok" onclick="moTra()">Trả máy</button>`);
     if(coQuyen('sua'))acts.push(`<button class="ghost" onclick="moForm(CT)">Sửa thông tin</button>`)}
-  else if(laQL())acts.push(`<button class="ghost" onclick="moForm(CT)">Sửa thông tin</button>`);
+  else{if(coQuyen('tra'))acts.push(`<button onclick="keoLaiP()">↩ Kéo lại phiếu (máy chưa được)</button>`);if(laQL())acts.push(`<button class="ghost" onclick="moForm(CT)">Sửa thông tin</button>`)}
   if(!tra&&laQL())acts.push(`<button class="ghost" onclick="moVForm(null,CT)">🧰 Giao việc</button>`);
   if(coQuyen('xoa'))acts.push(`<button class="bad" onclick="xoaPhieuCT()">Xoá phiếu</button>`);
   if(acts.length)h+=`<div class="card acts">${acts.join('')}</div>`;
@@ -904,6 +911,8 @@ function moDsTram(){$('dsTramTxt').value=TRAM.join('\n');$('dlgDsTram').showModa
 async function luuDsTram(){try{TRAM=await goi('luuTram',TOKEN,$('dsTramTxt').value.split('\n').map(x=>x.trim()).filter(Boolean));luuCache();$('dlgDsTram').close();veTramChon($('suaTram').value);toast('Đã lưu danh sách trạm')}catch(e){baoLoi(e)}}
 function moTT(){$('ttChon').innerHTML=HT.trangThai.filter(t=>t!=='Đã trả khách').map(t=>`<option ${t===CT.trangThai?'selected':''}>${esc(t)}</option>`).join('');$('ttGhi').value='';$('dlgTT').showModal()}
 async function guiTT(){try{const p=await goi('capNhatTrangThai',TOKEN,CT.id,$('ttChon').value,$('ttGhi').value);$('dlgTT').close();CT=p;capNhatDS(p);veCT();toast('Đã cập nhật')}catch(e){baoLoi(e)}}
+async function keoLaiP(){const ly=prompt('Kéo lại phiếu '+CT.ma+' để sửa tiếp.\nMáy còn lỗi gì / khách báo gì:','');if(ly===null)return;
+  try{const p=await goi('keoLaiPhieu',TOKEN,CT.id,ly);CT=p;capNhatDS(p);luuCache();veCT();toast('Đã kéo lại phiếu, trạng thái Đã tiếp nhận')}catch(e){baoLoi(e)}}
 function moTra(){$('traTom').textContent=`${CT.ma} · ${CT.sanPham} · ${CT.khTen}`;$('traKQ').value=CT.trangThai==='Không sửa được'?'Không sửa được':'';
   $('traTien').value=CT.chiPhiDK?Number(CT.chiPhiDK).toLocaleString('vi-VN'):'';$('traNguoi').textContent=U.ten;$('dlgTra').showModal()}
 async function guiTra(){try{const p=await goi('traMay',TOKEN,CT.id,{ketQua:$('traKQ').value,chiPhiTT:so($('traTien').value)});$('dlgTra').close();CT=p;capNhatDS(p);veCT();toast('Đã ghi trả máy')}catch(e){baoLoi(e)}}
