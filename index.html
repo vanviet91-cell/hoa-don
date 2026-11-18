@@ -115,7 +115,7 @@ textarea.ten{resize:none;overflow:hidden;min-height:40px}
  <label>Khổ giấy</label>
  <div class="fmt"><span class="seg" id="khoIn"><button type="button" data-k="A4">A4</button><button type="button" data-k="A5">A5</button></span></div>
  <p class="hint">Bấm In, hộp in của máy sẽ hiện ra để chọn máy in:<br>
- • <b>Điện thoại (iPhone)</b>: chọn máy in Wifi (AirPrint) cùng mạng Wifi với điện thoại.<br>
+ • <b>Điện thoại (iPhone)</b>: bảng Chia sẻ hiện ra, kéo xuống chọn <b>In</b>, rồi chọn máy in Wifi (AirPrint) cùng mạng Wifi với điện thoại.<br>
  • <b>Điện thoại Android</b>: chọn máy in Wifi; nếu chưa thấy, cài app/plugin in của hãng máy in (HP, Canon, Brother...).<br>
  • <b>Máy tính</b>: chọn máy in LAN hoặc USB đã cài trên máy, đặt khổ giấy giống ô trên.</p>
  <div class="actions"><button class="btn pri" id="inOk">In</button><button class="btn sec" id="inAnh">Không in được? Mở ảnh để in</button><button class="btn sec" id="inClose">Đóng</button></div>
@@ -272,11 +272,16 @@ $("btnShare").onclick=async()=>{draw();const b=await blob();const f=new File([b]
 let khoIn=localStorage.getItem("hd_kho")==="A5"?"A5":"A4";
 function showKho(){document.querySelectorAll("#khoIn button").forEach(b=>b.classList.toggle("on",b.dataset.k===khoIn))}
 document.querySelectorAll("#khoIn button").forEach(b=>b.onclick=()=>{khoIn=b.dataset.k;localStorage.setItem("hd_kho",khoIn);showKho()});
-$("btnPrint").onclick=()=>{showKho();$("dlgIn").showModal()};
+const iosApp=(/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1))&&(navigator.standalone||matchMedia("(display-mode: standalone)").matches);
+let pBlob=null;
+function prepIn(){draw();const cv=$("cv");$("inImg").src=cv.toDataURL("image/png");pBlob=null;cv.toBlob(b=>pBlob=b,"image/png")}
+$("btnPrint").onclick=()=>{showKho();prepIn();$("dlgIn").showModal()};
 $("inClose").onclick=()=>$("dlgIn").close();$("anhClose").onclick=()=>$("dlgAnh").close();
 $("inAnh").onclick=()=>{draw();$("anhIn").src=$("cv").toDataURL("image/png");$("dlgIn").close();$("dlgAnh").showModal()};
-$("inOk").onclick=()=>{draw();$("cssIn").textContent="@page{size:"+khoIn+" portrait;margin:"+(khoIn==="A5"?"6mm":"10mm")+"}@media print{#inVung img{width:auto!important;max-width:100%;max-height:"+(khoIn==="A5"?"196mm":"275mm")+";margin:0 auto}}";
- const im=$("inImg");im.onload=()=>{$("dlgIn").close();bumpNo();setTimeout(()=>window.print(),200)};im.src=$("cv").toDataURL("image/png")};
+$("inOk").onclick=()=>{$("cssIn").textContent="@page{size:"+khoIn+" portrait;margin:"+(khoIn==="A5"?"6mm":"10mm")+"}@media print{#inVung img{width:auto!important;max-width:100%;max-height:"+(khoIn==="A5"?"196mm":"275mm")+";margin:0 auto}}";
+ if(iosApp&&pBlob){const f=new File([pBlob],"hoa-don-"+($("soHD").value||"")+".png",{type:"image/png"});
+  if(navigator.canShare&&navigator.canShare({files:[f]})){$("dlgIn").close();navigator.share({files:[f],title:"In hoá đơn"}).then(bumpNo).catch(()=>{});return}}
+ $("dlgIn").close();bumpNo();window.print()};
 $("btnNew").onclick=()=>{if(!confirm("Xoá form để viết hoá đơn mới?"))return;bumpNo();["khTen","khSdt","khDc","daTT","ghiChu"].forEach(k=>$(k).value="");
  items=[blank()];$("soHD").value=Number(localStorage.getItem("hd_last")||0)+1;$("ngay").value=today();renderItems();update()};
 ["soHD","ngay","khTen","khSdt","khDc","ghiChu"].forEach(k=>$(k).oninput=update);
