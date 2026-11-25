@@ -369,7 +369,7 @@ img.xemPhieu{display:block;width:100%;border:1px solid var(--bd);border-radius:8
   <div class="f"><span>Khổ giấy</span><select id="inKho" onchange="doiKho()"><option value="A5">A5 (nửa tờ A4)</option><option value="A4">A4</option><option value="K80">Giấy in nhiệt 80mm</option></select></div>
   <label class="row" id="inAnhO" style="margin:8px 0"><input type="checkbox" id="inAnh" style="width:22px;height:22px"> In kèm ảnh tình trạng và ảnh lúc nhận</label>
   <button style="width:100%" type="button" onclick="inPhieu()">🖨 In qua máy in Wifi</button>
-  <div class="mu" style="margin:6px 0 12px">Điện thoại và máy in cần chung một mạng Wifi. iPhone tìm máy in AirPrint, Android tìm máy in qua Mopria hoặc ứng dụng của hãng máy in. Bấm In, chọn máy in, rồi In.</div>
+  <div class="mu" style="margin:6px 0 12px">Điện thoại và máy in cần chung một mạng Wifi. iPhone tìm máy in AirPrint, Android tìm máy in qua Mopria hoặc ứng dụng của hãng máy in. Bấm In, chọn máy in, rồi In. Trên iPhone (mở từ icon app): bấm In, bảng Chia sẻ hiện ra, kéo xuống chọn In.</div>
   <button class="ghost" style="width:100%" type="button" onclick="anhPhieu()">Lưu phiếu thành ảnh</button>
   <div class="mu" style="margin-top:6px">Dùng khi không hiện hộp in, hoặc khi máy in chỉ in được qua ứng dụng riêng của hãng.</div>
   <button class="ghost" style="width:100%;margin-top:12px" type="button" onclick="$('dlgIn').close()">Đóng</button>
@@ -927,7 +927,11 @@ function dongIn(p){const tra=p.trangThai==='Đã trả khách';const r=[
   if(tra)r.push(['Kết quả',p.ketQua],['Thực thu',p.chiPhiTT?tien(p.chiPhiTT):'0đ'],['Người trả máy',p.nguoiTra+' · '+gio(p.lucTra)]);
   return r.filter(x=>x[1])}
 function tieuDeIn(p){return'PHIẾU TIẾP NHẬN '+(p.loai==='Bảo hành'?'BẢO HÀNH':'SỬA CHỮA')}
-function moIn(){$('inKho').value=localStorage.getItem('psc_kho')||'A5';$('inAnh').checked=localStorage.getItem('psc_inanh')!=='0';doiKho();$('dlgIn').showModal()}
+const IOS_APP=(/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1))&&(navigator.standalone||matchMedia('(display-mode: standalone)').matches);
+let IN_BLOB=null;
+/* iPhone mở từ icon ngoài MH chính chặn window.print(): chuẩn bị sẵn ảnh phiếu để bấm In là mở bảng Chia sẻ > In ngay trong cú chạm */
+function moIn(){$('inKho').value=localStorage.getItem('psc_kho')||'A5';$('inAnh').checked=localStorage.getItem('psc_inanh')!=='0';doiKho();
+  IN_BLOB=null;if(IOS_APP){try{vePhieu(CT).toBlob(b=>IN_BLOB=b,'image/png')}catch(e){}}$('dlgIn').showModal()}
 function doiKho(){$('inAnhO').classList.toggle('hide',$('inKho').value==='K80')}
 function inPhieu(){const p=CT,kho=$('inKho').value,kemAnh=kho!=='K80'&&$('inAnh').checked;
   localStorage.setItem('psc_kho',kho);localStorage.setItem('psc_inanh',$('inAnh').checked?'1':'0');
@@ -940,7 +944,9 @@ function inPhieu(){const p=CT,kho=$('inKho').value,kemAnh=kho!=='K80'&&$('inAnh'
   <table>${dongIn(p).map(([k,v])=>`<tr><td>${k}</td><td>${esc(v).replace(/\n/g,'<br>')}</td></tr>`).join('')}</table>
   ${anh.length?`<div class="anhs">${anh.map(a=>`<img src="${ANH_CACHE[a.id]}">`).join('')}</div>`:''}
   <div class="ky"><div><b>Khách hàng</b><br><i>(Ký, ghi rõ họ tên)</i></div><div><b>${p.trangThai==='Đã trả khách'?'Người trả máy':'Người tiếp nhận'}</b><br><i>(Ký, ghi rõ họ tên)</i></div></div>`;
-  $('dlgIn').close();setTimeout(()=>window.print(),150)}
+  if(IOS_APP&&IN_BLOB&&navigator.canShare){const f=new File([IN_BLOB],'phieu-'+(p.ma||'')+'.png',{type:'image/png'});
+    if(navigator.canShare({files:[f]})){$('dlgIn').close();navigator.share({files:[f],title:'In phiếu '+(p.ma||'')}).catch(()=>{});return}}
+  $('dlgIn').close();window.print()}
 /* Ảnh phiếu: dự phòng khi trình duyệt không mở được hộp in. Nhấn giữ ảnh > Chia sẻ > In */
 function anhPhieu(){$('anhPhieuImg').src=vePhieu(CT).toDataURL('image/png');$('dlgIn').close();$('dlgAnhPhieu').showModal()}
 function vePhieu(p){const W=1000,PAD=48,LBL=290,FS=30,LH=42;
